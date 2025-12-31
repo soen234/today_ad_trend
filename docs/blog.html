@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - TAT Today Ad Trend</title>
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8143178103770527"
+         crossorigin="anonymous"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a1929 0%, #1a2744 100%);
+            min-height: 100vh;
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        /* GNB */
+        .gnb {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 25, 41, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            padding: 0 20px;
+        }
+
+        .gnb-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .gnb-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .gnb-logo img {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+
+        .gnb-logo span {
+            font-weight: 700;
+            font-size: 18px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gnb-nav {
+            display: flex;
+            gap: 32px;
+        }
+
+        .gnb-nav a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .gnb-nav a:hover, .gnb-nav a.active {
+            color: #4ade80;
+        }
+
+        .gnb-lang {
+            display: flex;
+            gap: 8px;
+        }
+
+        .lang-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .lang-btn:hover, .lang-btn.active {
+            background: rgba(74, 222, 128, 0.3);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 100px 20px 40px;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .page-header h1 {
+            font-size: 36px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-header p {
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        /* Ad Container */
+        .ad-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 32px 0;
+            text-align: center;
+            min-height: 100px;
+        }
+
+        .ad-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        /* Blog Posts */
+        .blog-grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .blog-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .blog-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .blog-card-image {
+            height: 180px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .blog-card-content {
+            padding: 24px;
+        }
+
+        .blog-card-meta {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .blog-card-category {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .blog-card-date {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .blog-card h2 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .blog-card h2 a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .blog-card h2 a:hover {
+            color: #4ade80;
+        }
+
+        .blog-card p {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .read-more {
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .read-more:hover {
+            text-decoration: underline;
+        }
+
+        /* Featured Post */
+        .featured-post {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            margin-bottom: 32px;
+        }
+
+        .featured-post .blog-card-image {
+            height: 100%;
+            min-height: 280px;
+            border-radius: 16px 0 0 16px;
+        }
+
+        .featured-post .blog-card-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .featured-label {
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            color: #0a1929;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-bottom: 12px;
+            width: fit-content;
+        }
+
+        .featured-post h2 {
+            font-size: 24px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+        }
+
+        footer p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-links a:hover {
+            color: #4ade80;
+        }
+
+        @media (max-width: 768px) {
+            .featured-post {
+                grid-template-columns: 1fr;
+            }
+            .featured-post .blog-card-image {
+                border-radius: 16px 16px 0 0;
+                min-height: 180px;
+            }
+            .gnb-nav {
+                gap: 16px;
+            }
+            .gnb-nav a {
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .gnb-lang {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- GNB -->
+    <nav class="gnb">
+        <div class="gnb-inner">
+            <a href="index.html" class="gnb-logo">
+                <img src="logo.png" alt="TAT">
+                <span>TAT</span>
+            </a>
+            <div class="gnb-nav">
+                <a href="index.html" data-ko="홈" data-en="Home">Home</a>
+                <a href="guide.html" data-ko="가이드" data-en="Guide">Guide</a>
+                <a href="blog.html" class="active" data-ko="블로그" data-en="Blog">Blog</a>
+            </div>
+            <div class="gnb-lang">
+                <button class="lang-btn active" onclick="setLang('ko')">KO</button>
+                <button class="lang-btn" onclick="setLang('en')">EN</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 data-ko="광고 트렌드 블로그" data-en="Ad Trend Blog">Ad Trend Blog</h1>
+            <p data-ko="모바일 광고의 최신 트렌드와 인사이트를 공유합니다" data-en="Sharing the latest trends and insights in mobile advertising">Sharing the latest trends and insights in mobile advertising</p>
+        </div>
+
+        <!-- Ad Banner Top -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="1234567890"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <!-- Featured Post -->
+        <article class="blog-card featured-post">
+            <div class="blog-card-image">📊</div>
+            <div class="blog-card-content">
+                <span class="featured-label" data-ko="추천 글" data-en="Featured">Featured</span>
+                <div class="blog-card-meta">
+                    <span class="blog-card-category" data-ko="트렌드" data-en="Trends">Trends</span>
+                    <span class="blog-card-date">Dec 30, 2025</span>
+                </div>
+                <h2><a href="post-rewarded-ads-2025.html" data-ko="2025년 리워드 광고 트렌드: 왜 모든 앱이 도입해야 하는가" data-en="2025 Rewarded Ad Trends: Why Every App Should Implement Them">2025 Rewarded Ad Trends: Why Every App Should Implement Them</a></h2>
+                <p data-ko="리워드 광고는 사용자 경험을 해치지 않으면서 높은 수익을 창출하는 가장 효과적인 광고 포맷입니다. 2025년 최신 트렌드와 성공 사례를 분석합니다." data-en="Rewarded ads are the most effective ad format that generates high revenue without harming user experience. We analyze the latest 2025 trends and success stories.">Rewarded ads are the most effective ad format that generates high revenue without harming user experience. We analyze the latest 2025 trends and success stories.</p>
+                <a href="post-rewarded-ads-2025.html" class="read-more" data-ko="자세히 보기 →" data-en="Read more →">Read more →</a>
+            </div>
+        </article>
+
+        <!-- Blog Grid -->
+        <div class="blog-grid">
+            <!-- Post 1 -->
+            <article class="blog-card">
+                <div class="blog-card-image">📱</div>
+                <div class="blog-card-content">
+                    <div class="blog-card-meta">
+                        <span class="blog-card-category" data-ko="가이드" data-en="Guide">Guide</span>
+                        <span class="blog-card-date">Dec 28, 2025</span>
+                    </div>
+                    <h2><a href="post-banner-sizes.html" data-ko="모바일 배너 광고 사이즈 완벽 가이드: 어떤 크기가 가장 효과적인가?" data-en="Complete Guide to Mobile Banner Ad Sizes: Which Size Works Best?">Complete Guide to Mobile Banner Ad Sizes: Which Size Works Best?</a></h2>
+                    <p data-ko="320x50, 300x250, 320x100... 다양한 배너 사이즈 중 어떤 것이 CTR과 eCPM이 가장 높을까요? 실제 데이터 기반으로 분석합니다." data-en="320x50, 300x250, 320x100... Which banner size has the highest CTR and eCPM? We analyze based on real data.">320x50, 300x250, 320x100... Which banner size has the highest CTR and eCPM? We analyze based on real data.</p>
+                    <a href="post-banner-sizes.html" class="read-more" data-ko="자세히 보기 →" data-en="Read more →">Read more →</a>
+                </div>
+            </article>
+
+            <!-- Post 2 -->
+            <article class="blog-card">
+                <div class="blog-card-image">💰</div>
+                <div class="blog-card-content">
+                    <div class="blog-card-meta">
+                        <span class="blog-card-category" data-ko="수익화" data-en="Monetization">Monetization</span>
+                        <span class="blog-card-date">Dec 25, 2025</span>
+                    </div>
+                    <h2><a href="post-ecpm-optimization.html" data-ko="eCPM 최적화 전략: 광고 수익을 2배로 늘리는 방법" data-en="eCPM Optimization Strategy: How to Double Your Ad Revenue">eCPM Optimization Strategy: How to Double Your Ad Revenue</a></h2>
+                    <p data-ko="같은 트래픽으로 더 많은 수익을 올리는 비결. 워터폴 설정, 메디에이션 최적화, A/B 테스트 전략을 공개합니다." data-en="The secret to earning more revenue with the same traffic. We reveal waterfall settings, mediation optimization, and A/B testing strategies.">The secret to earning more revenue with the same traffic. We reveal waterfall settings, mediation optimization, and A/B testing strategies.</p>
+                    <a href="post-ecpm-optimization.html" class="read-more" data-ko="자세히 보기 →" data-en="Read more →">Read more →</a>
+                </div>
+            </article>
+
+            <!-- Ad in feed -->
+            <div class="ad-container">
+                <div class="ad-label">Advertisement</div>
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-8143178103770527"
+                     data-ad-slot="0987654321"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
+
+            <!-- Post 3 -->
+            <article class="blog-card">
+                <div class="blog-card-image">📺</div>
+                <div class="blog-card-content">
+                    <div class="blog-card-meta">
+                        <span class="blog-card-category" data-ko="분석" data-en="Analysis">Analysis</span>
+                        <span class="blog-card-date">Dec 22, 2025</span>
+                    </div>
+                    <h2><a href="post-interstitial-best-practices.html" data-ko="전면 광고 베스트 프랙티스: 이탈률 없이 수익 극대화하기" data-en="Interstitial Ad Best Practices: Maximize Revenue Without Losing Users">Interstitial Ad Best Practices: Maximize Revenue Without Losing Users</a></h2>
+                    <p data-ko="전면 광고는 양날의 검입니다. 잘못 사용하면 사용자 이탈을, 잘 사용하면 높은 수익을 가져옵니다. 올바른 타이밍과 빈도 설정법을 알아봅니다." data-en="Interstitial ads are a double-edged sword. Misuse leads to user churn, proper use brings high revenue. Learn the right timing and frequency settings.">Interstitial ads are a double-edged sword. Misuse leads to user churn, proper use brings high revenue. Learn the right timing and frequency settings.</p>
+                    <a href="post-interstitial-best-practices.html" class="read-more" data-ko="자세히 보기 →" data-en="Read more →">Read more →</a>
+                </div>
+            </article>
+
+            <!-- Post 4 -->
+            <article class="blog-card">
+                <div class="blog-card-image">🎮</div>
+                <div class="blog-card-content">
+                    <div class="blog-card-meta">
+                        <span class="blog-card-category" data-ko="케이스 스터디" data-en="Case Study">Case Study</span>
+                        <span class="blog-card-date">Dec 20, 2025</span>
+                    </div>
+                    <h2><a href="post-gaming-ads.html" data-ko="게임 앱 광고 수익화 성공 사례: 월 $10,000 달성한 인디 개발자 이야기" data-en="Gaming App Monetization Success: How an Indie Developer Reached $10K/Month">Gaming App Monetization Success: How an Indie Developer Reached $10K/Month</a></h2>
+                    <p data-ko="작은 게임 앱이 리워드 광고와 전면 광고의 적절한 조합으로 월 $10,000 수익을 달성한 실제 사례를 분석합니다." data-en="A real case study of how a small gaming app achieved $10,000 monthly revenue through the right combination of rewarded and interstitial ads.">A real case study of how a small gaming app achieved $10,000 monthly revenue through the right combination of rewarded and interstitial ads.</p>
+                    <a href="post-gaming-ads.html" class="read-more" data-ko="자세히 보기 →" data-en="Read more →">Read more →</a>
+                </div>
+            </article>
+
+            <!-- Post 5 -->
+            <article class="blog-card">
+                <div class="blog-card-image">🔒</div>
+                <div class="blog-card-content">
+                    <div class="blog-card-meta">
+                        <span class="blog-card-category" data-ko="프라이버시" data-en="Privacy">Privacy</span>
+                        <span class="blog-card-date">Dec 18, 2025</span>
+                    </div>
+                    <h2><a href="post-privacy-ads.html" data-ko="iOS ATT와 Android Privacy Sandbox: 광고 수익에 미치는 영향과 대응 전략" data-en="iOS ATT & Android Privacy Sandbox: Impact on Ad Revenue and Strategies">iOS ATT & Android Privacy Sandbox: Impact on Ad Revenue and Strategies</a></h2>
+                    <p data-ko="프라이버시 규제 강화로 타겟팅이 어려워지고 있습니다. SKAdNetwork, Privacy Sandbox에 대응하는 광고 전략을 알아봅니다." data-en="Privacy regulations are making targeting harder. Learn advertising strategies to adapt to SKAdNetwork and Privacy Sandbox.">Privacy regulations are making targeting harder. Learn advertising strategies to adapt to SKAdNetwork and Privacy Sandbox.</p>
+                    <a href="post-privacy-ads.html" class="read-more" data-ko="자세히 보기 →" data-en="Read more →">Read more →</a>
+                </div>
+            </article>
+
+            <!-- Post 6 -->
+            <article class="blog-card">
+                <div class="blog-card-image">📈</div>
+                <div class="blog-card-content">
+                    <div class="blog-card-meta">
+                        <span class="blog-card-category" data-ko="비교" data-en="Comparison">Comparison</span>
+                        <span class="blog-card-date">Dec 15, 2025</span>
+                    </div>
+                    <h2><a href="post-admob-vs-applovin.html" data-ko="AdMob vs AppLovin MAX: 어떤 광고 플랫폼을 선택해야 할까?" data-en="AdMob vs AppLovin MAX: Which Ad Platform Should You Choose?">AdMob vs AppLovin MAX: Which Ad Platform Should You Choose?</a></h2>
+                    <p data-ko="가장 인기 있는 두 광고 플랫폼을 fill rate, eCPM, 사용 편의성, 메디에이션 지원 측면에서 비교 분석합니다." data-en="We compare the two most popular ad platforms in terms of fill rate, eCPM, ease of use, and mediation support.">We compare the two most popular ad platforms in terms of fill rate, eCPM, ease of use, and mediation support.</p>
+                    <a href="post-admob-vs-applovin.html" class="read-more" data-ko="자세히 보기 →" data-en="Read more →">Read more →</a>
+                </div>
+            </article>
+        </div>
+
+        <!-- Ad Banner Bottom -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-format="autorelaxed"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="3344556677"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2025 TAT (Today Ad Trend). All rights reserved.</p>
+            <div class="footer-links">
+                <a href="index.html" data-ko="홈" data-en="Home">Home</a>
+                <a href="guide.html" data-ko="가이드" data-en="Guide">Guide</a>
+                <a href="blog.html" data-ko="블로그" data-en="Blog">Blog</a>
+                <a href="https://brave-lifter-325.notion.site/Privacy-Policy-for-TAT-Today-Ad-Trend-2d8662e222b880f4be19c5d43d33de85" data-ko="개인정보처리방침" data-en="Privacy Policy">Privacy Policy</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        function setLang(lang) {
+            document.querySelectorAll('[data-ko]').forEach(el => {
+                el.textContent = el.getAttribute(`data-${lang}`);
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === (lang === 'ko' ? 'KO' : 'EN'));
+            });
+        }
+        setLang('en');
+    </script>
+</body>
+</html>

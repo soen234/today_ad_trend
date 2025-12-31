@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAT App Guide - Today Ad Trend</title>
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8143178103770527"
+         crossorigin="anonymous"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a1929 0%, #1a2744 100%);
+            min-height: 100vh;
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        /* GNB */
+        .gnb {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 25, 41, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            padding: 0 20px;
+        }
+
+        .gnb-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .gnb-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .gnb-logo img {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+
+        .gnb-logo span {
+            font-weight: 700;
+            font-size: 18px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gnb-nav {
+            display: flex;
+            gap: 32px;
+        }
+
+        .gnb-nav a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .gnb-nav a:hover, .gnb-nav a.active {
+            color: #4ade80;
+        }
+
+        .gnb-lang {
+            display: flex;
+            gap: 8px;
+        }
+
+        .gnb-lang .lang-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .gnb-lang .lang-btn:hover, .gnb-lang .lang-btn.active {
+            background: rgba(74, 222, 128, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            .gnb-lang { display: none; }
+            .gnb-nav { gap: 16px; }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 100px 20px 40px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header img {
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* Ad Container */
+        .ad-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 32px 0;
+            text-align: center;
+            min-height: 100px;
+        }
+
+        .ad-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        /* Content Sections */
+        .section {
+            margin-bottom: 48px;
+        }
+
+        .section h2 {
+            font-size: 24px;
+            margin-bottom: 16px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section h2 .icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .section p {
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+
+        .section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .section li {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .section li .step-num {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #0a1929;
+            flex-shrink: 0;
+        }
+
+        .section li .step-content h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .section li .step-content p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .feature-item .emoji {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .feature-item h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .feature-item p {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+
+        .info-box h4 {
+            color: #4ade80;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-box p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+
+        .warning-box h4 {
+            color: #fbbf24;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .warning-box p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-table th {
+            background: rgba(255, 255, 255, 0.05);
+            color: #4ade80;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            color: #94a3b8;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+        }
+
+        footer p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-links a:hover {
+            color: #4ade80;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 22px; }
+            .section h2 { font-size: 20px; }
+            .comparison-table { font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- GNB -->
+    <nav class="gnb">
+        <div class="gnb-inner">
+            <a href="index.html" class="gnb-logo">
+                <img src="logo.png" alt="TAT">
+                <span>TAT</span>
+            </a>
+            <div class="gnb-nav">
+                <a href="index.html" data-ko="홈" data-en="Home">Home</a>
+                <a href="guide.html" class="active" data-ko="가이드" data-en="Guide">Guide</a>
+                <a href="blog.html" data-ko="블로그" data-en="Blog">Blog</a>
+            </div>
+            <div class="gnb-lang">
+                <button class="lang-btn active" onclick="setLang('ko')">KO</button>
+                <button class="lang-btn" onclick="setLang('en')">EN</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <img src="logo.png" alt="TAT Logo">
+            <div>
+                <h1 data-ko="TAT 앱 사용 가이드" data-en="TAT App User Guide">TAT App User Guide</h1>
+                <p data-ko="Today Ad Trend 앱을 최대한 활용하는 방법" data-en="How to get the most out of Today Ad Trend app">How to get the most out of Today Ad Trend app</p>
+            </div>
+        </div>
+
+        <!-- Ad Banner Top -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="1234567890"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <!-- Introduction -->
+        <section class="section">
+            <h2>
+                <span class="icon">👋</span>
+                <span data-ko="TAT 앱 소개" data-en="Introduction to TAT">Introduction to TAT</span>
+            </h2>
+            <p data-ko="TAT(Today Ad Trend)는 다양한 모바일 광고 포맷을 탐색하고 체험할 수 있는 앱입니다. 마케터, 개발자, 광고 업계 종사자들이 실제 광고 형태를 확인하고 트렌드를 파악하는 데 도움을 줍니다." data-en="TAT (Today Ad Trend) is an app that allows you to explore and experience various mobile ad formats. It helps marketers, developers, and advertising professionals understand real ad formats and identify trends.">TAT (Today Ad Trend) is an app that allows you to explore and experience various mobile ad formats. It helps marketers, developers, and advertising professionals understand real ad formats and identify trends.</p>
+
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="emoji">📱</div>
+                    <h4 data-ko="배너 광고" data-en="Banner Ads">Banner Ads</h4>
+                    <p data-ko="다양한 크기의 배너 확인" data-en="View various banner sizes">View various banner sizes</p>
+                </div>
+                <div class="feature-item">
+                    <div class="emoji">📺</div>
+                    <h4 data-ko="전면 광고" data-en="Interstitial">Interstitial</h4>
+                    <p data-ko="풀스크린 광고 체험" data-en="Full-screen ad experience">Full-screen ad experience</p>
+                </div>
+                <div class="feature-item">
+                    <div class="emoji">🎁</div>
+                    <h4 data-ko="리워드 광고" data-en="Rewarded">Rewarded</h4>
+                    <p data-ko="보상형 동영상 광고" data-en="Rewarded video ads">Rewarded video ads</p>
+                </div>
+                <div class="feature-item">
+                    <div class="emoji">📸</div>
+                    <h4 data-ko="스크린샷" data-en="Screenshot">Screenshot</h4>
+                    <p data-ko="광고 이미지 저장" data-en="Save ad images">Save ad images</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Getting Started -->
+        <section class="section">
+            <h2>
+                <span class="icon">🚀</span>
+                <span data-ko="시작하기" data-en="Getting Started">Getting Started</span>
+            </h2>
+            <p data-ko="TAT 앱을 설치하고 사용하는 방법을 알아보세요." data-en="Learn how to install and use the TAT app.">Learn how to install and use the TAT app.</p>
+
+            <ul>
+                <li>
+                    <span class="step-num">1</span>
+                    <div class="step-content">
+                        <h4 data-ko="앱 다운로드" data-en="Download the App">Download the App</h4>
+                        <p data-ko="App Store 또는 Google Play에서 'TAT' 또는 'Today Ad Trend'를 검색하여 앱을 다운로드합니다." data-en="Search for 'TAT' or 'Today Ad Trend' on the App Store or Google Play to download the app.">Search for 'TAT' or 'Today Ad Trend' on the App Store or Google Play to download the app.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-num">2</span>
+                    <div class="step-content">
+                        <h4 data-ko="앱 실행" data-en="Launch the App">Launch the App</h4>
+                        <p data-ko="설치가 완료되면 앱을 실행합니다. 별도의 회원가입 없이 바로 사용할 수 있습니다." data-en="Once installed, launch the app. You can use it immediately without signing up.">Once installed, launch the app. You can use it immediately without signing up.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-num">3</span>
+                    <div class="step-content">
+                        <h4 data-ko="탭 탐색" data-en="Explore Tabs">Explore Tabs</h4>
+                        <p data-ko="하단 탭 바를 통해 Banner, Interstitial, Rewarded, Settings 화면을 탐색할 수 있습니다." data-en="Use the bottom tab bar to navigate between Banner, Interstitial, Rewarded, and Settings screens.">Use the bottom tab bar to navigate between Banner, Interstitial, Rewarded, and Settings screens.</p>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Ad Banner Middle -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="0987654321"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <!-- Banner Ads Guide -->
+        <section class="section">
+            <h2>
+                <span class="icon">📱</span>
+                <span data-ko="배너 광고 사용법" data-en="Using Banner Ads">Using Banner Ads</span>
+            </h2>
+            <p data-ko="배너 광고는 앱 화면의 일부를 차지하는 직사각형 광고입니다. TAT에서는 다양한 배너 크기를 확인할 수 있습니다." data-en="Banner ads are rectangular ads that occupy part of the app screen. In TAT, you can view various banner sizes.">Banner ads are rectangular ads that occupy part of the app screen. In TAT, you can view various banner sizes.</p>
+
+            <table class="comparison-table">
+                <tr>
+                    <th data-ko="배너 타입" data-en="Banner Type">Banner Type</th>
+                    <th data-ko="크기" data-en="Size">Size</th>
+                    <th data-ko="특징" data-en="Features">Features</th>
+                </tr>
+                <tr>
+                    <td>Banner</td>
+                    <td>320x50</td>
+                    <td data-ko="표준 모바일 배너" data-en="Standard mobile banner">Standard mobile banner</td>
+                </tr>
+                <tr>
+                    <td>Large Banner</td>
+                    <td>320x100</td>
+                    <td data-ko="더 큰 가시성" data-en="Greater visibility">Greater visibility</td>
+                </tr>
+                <tr>
+                    <td>Medium Rectangle</td>
+                    <td>300x250</td>
+                    <td data-ko="콘텐츠 사이에 적합" data-en="Ideal between content">Ideal between content</td>
+                </tr>
+                <tr>
+                    <td>Adaptive</td>
+                    <td data-ko="자동" data-en="Auto">Auto</td>
+                    <td data-ko="화면 너비에 맞춤" data-en="Fits screen width">Fits screen width</td>
+                </tr>
+            </table>
+
+            <div class="info-box">
+                <h4>💡 <span data-ko="팁" data-en="Tip">Tip</span></h4>
+                <p data-ko="필터 버튼을 사용하여 특정 배너 타입만 볼 수 있습니다. 'All'을 선택하면 모든 타입을 한눈에 확인할 수 있습니다." data-en="Use the filter buttons to view only specific banner types. Select 'All' to see all types at once.">Use the filter buttons to view only specific banner types. Select 'All' to see all types at once.</p>
+            </div>
+        </section>
+
+        <!-- Interstitial Ads Guide -->
+        <section class="section">
+            <h2>
+                <span class="icon">📺</span>
+                <span data-ko="전면 광고 사용법" data-en="Using Interstitial Ads">Using Interstitial Ads</span>
+            </h2>
+            <p data-ko="전면 광고는 화면 전체를 덮는 풀스크린 광고입니다. 일반적으로 게임 레벨 사이나 콘텐츠 전환 시점에 노출됩니다." data-en="Interstitial ads are full-screen ads that cover the entire screen. They typically appear between game levels or at content transition points.">Interstitial ads are full-screen ads that cover the entire screen. They typically appear between game levels or at content transition points.</p>
+
+            <ul>
+                <li>
+                    <span class="step-num">1</span>
+                    <div class="step-content">
+                        <h4 data-ko="Interstitial 탭 선택" data-en="Select Interstitial Tab">Select Interstitial Tab</h4>
+                        <p data-ko="하단 탭 바에서 Interstitial 아이콘을 탭합니다." data-en="Tap the Interstitial icon in the bottom tab bar.">Tap the Interstitial icon in the bottom tab bar.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-num">2</span>
+                    <div class="step-content">
+                        <h4 data-ko="광고 로딩 대기" data-en="Wait for Ad Loading">Wait for Ad Loading</h4>
+                        <p data-ko="Status가 'Ready'로 변경될 때까지 기다립니다. 광고가 로딩 중일 때는 'Loading...'으로 표시됩니다." data-en="Wait until the Status changes to 'Ready'. While the ad is loading, it will show 'Loading...'.">Wait until the Status changes to 'Ready'. While the ad is loading, it will show 'Loading...'.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-num">3</span>
+                    <div class="step-content">
+                        <h4 data-ko="광고 보기" data-en="View the Ad">View the Ad</h4>
+                        <p data-ko="'Show Ad' 버튼을 탭하여 전면 광고를 확인합니다. 광고는 일정 시간 후 닫기 버튼이 나타납니다." data-en="Tap the 'Show Ad' button to view the interstitial ad. A close button will appear after a certain time.">Tap the 'Show Ad' button to view the interstitial ad. A close button will appear after a certain time.</p>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="warning-box">
+                <h4>⚠️ <span data-ko="주의" data-en="Note">Note</span></h4>
+                <p data-ko="전면 광고는 사용자 경험을 방해할 수 있으므로, 실제 앱에서는 적절한 타이밍에 신중하게 사용해야 합니다." data-en="Interstitial ads can disrupt user experience, so they should be used carefully at appropriate times in real apps.">Interstitial ads can disrupt user experience, so they should be used carefully at appropriate times in real apps.</p>
+            </div>
+        </section>
+
+        <!-- Rewarded Ads Guide -->
+        <section class="section">
+            <h2>
+                <span class="icon">🎁</span>
+                <span data-ko="리워드 광고 사용법" data-en="Using Rewarded Ads">Using Rewarded Ads</span>
+            </h2>
+            <p data-ko="리워드 광고는 사용자가 자발적으로 시청하고 보상을 받는 광고입니다. 사용자 만족도가 가장 높은 광고 형태입니다." data-en="Rewarded ads are ads that users voluntarily watch in exchange for rewards. This is the ad format with the highest user satisfaction.">Rewarded ads are ads that users voluntarily watch in exchange for rewards. This is the ad format with the highest user satisfaction.</p>
+
+            <ul>
+                <li>
+                    <span class="step-num">1</span>
+                    <div class="step-content">
+                        <h4 data-ko="Rewarded 탭 선택" data-en="Select Rewarded Tab">Select Rewarded Tab</h4>
+                        <p data-ko="하단 탭 바에서 Rewarded(선물 아이콘) 탭을 선택합니다." data-en="Select the Rewarded (gift icon) tab from the bottom tab bar.">Select the Rewarded (gift icon) tab from the bottom tab bar.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-num">2</span>
+                    <div class="step-content">
+                        <h4 data-ko="광고 시청" data-en="Watch the Ad">Watch the Ad</h4>
+                        <p data-ko="'Watch Ad & Earn' 버튼을 탭하여 리워드 광고를 시청합니다. 광고를 끝까지 시청해야 보상을 받을 수 있습니다." data-en="Tap the 'Watch Ad & Earn' button to watch the rewarded ad. You must watch the entire ad to receive the reward.">Tap the 'Watch Ad & Earn' button to watch the rewarded ad. You must watch the entire ad to receive the reward.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-num">3</span>
+                    <div class="step-content">
+                        <h4 data-ko="보상 확인" data-en="Check Rewards">Check Rewards</h4>
+                        <p data-ko="광고 시청 완료 후 'Total Rewards Earned' 카운터가 증가합니다. 알림으로도 보상 획득을 확인할 수 있습니다." data-en="After watching the ad, the 'Total Rewards Earned' counter will increase. You'll also see a notification confirming your reward.">After watching the ad, the 'Total Rewards Earned' counter will increase. You'll also see a notification confirming your reward.</p>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="info-box">
+                <h4>💡 <span data-ko="리워드 광고의 장점" data-en="Benefits of Rewarded Ads">Benefits of Rewarded Ads</span></h4>
+                <p data-ko="리워드 광고는 eCPM이 가장 높고, 사용자가 자발적으로 시청하기 때문에 부정적인 경험을 최소화합니다." data-en="Rewarded ads have the highest eCPM and minimize negative experiences because users choose to watch them.">Rewarded ads have the highest eCPM and minimize negative experiences because users choose to watch them.</p>
+            </div>
+        </section>
+
+        <!-- Screenshot Feature -->
+        <section class="section">
+            <h2>
+                <span class="icon">📸</span>
+                <span data-ko="스크린샷 저장 기능" data-en="Screenshot Save Feature">Screenshot Save Feature</span>
+            </h2>
+            <p data-ko="배너 광고 화면에서 마음에 드는 광고를 갤러리에 저장할 수 있습니다. 광고 레퍼런스 수집에 유용합니다." data-en="You can save ads you like to your gallery from the Banner ads screen. This is useful for collecting ad references.">You can save ads you like to your gallery from the Banner ads screen. This is useful for collecting ad references.</p>
+
+            <ul>
+                <li>
+                    <span class="step-num">1</span>
+                    <div class="step-content">
+                        <h4 data-ko="광고 카드에서 Save 버튼 찾기" data-en="Find the Save Button">Find the Save Button</h4>
+                        <p data-ko="각 배너 광고 카드 하단에 파란색 'Save' 버튼이 있습니다." data-en="There's a blue 'Save' button at the bottom of each banner ad card.">There's a blue 'Save' button at the bottom of each banner ad card.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-num">2</span>
+                    <div class="step-content">
+                        <h4 data-ko="권한 허용" data-en="Grant Permission">Grant Permission</h4>
+                        <p data-ko="처음 저장 시 갤러리 접근 권한을 요청합니다. '허용'을 선택하세요." data-en="The first time you save, you'll be asked for gallery access permission. Select 'Allow'.">The first time you save, you'll be asked for gallery access permission. Select 'Allow'.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-num">3</span>
+                    <div class="step-content">
+                        <h4 data-ko="저장 완료" data-en="Save Complete">Save Complete</h4>
+                        <p data-ko="성공적으로 저장되면 알림이 표시됩니다. 갤러리에서 저장된 이미지를 확인하세요." data-en="A notification will appear when saved successfully. Check the saved image in your gallery.">A notification will appear when saved successfully. Check the saved image in your gallery.</p>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Ad Comparison -->
+        <section class="section">
+            <h2>
+                <span class="icon">📊</span>
+                <span data-ko="광고 포맷 비교" data-en="Ad Format Comparison">Ad Format Comparison</span>
+            </h2>
+            <p data-ko="각 광고 포맷의 특성을 비교하여 상황에 맞는 광고를 선택하세요." data-en="Compare the characteristics of each ad format to choose the right one for your situation.">Compare the characteristics of each ad format to choose the right one for your situation.</p>
+
+            <table class="comparison-table">
+                <tr>
+                    <th data-ko="포맷" data-en="Format">Format</th>
+                    <th data-ko="사용자 경험" data-en="User Experience">User Experience</th>
+                    <th>eCPM</th>
+                    <th data-ko="추천 상황" data-en="Recommended For">Recommended For</th>
+                </tr>
+                <tr>
+                    <td>Banner</td>
+                    <td data-ko="낮은 방해" data-en="Low disruption">Low disruption</td>
+                    <td data-ko="낮음" data-en="Low">Low</td>
+                    <td data-ko="지속적 노출" data-en="Continuous exposure">Continuous exposure</td>
+                </tr>
+                <tr>
+                    <td>Interstitial</td>
+                    <td data-ko="중간 방해" data-en="Medium disruption">Medium disruption</td>
+                    <td data-ko="중간" data-en="Medium">Medium</td>
+                    <td data-ko="화면 전환 시" data-en="Screen transitions">Screen transitions</td>
+                </tr>
+                <tr>
+                    <td>Rewarded</td>
+                    <td data-ko="사용자 선택" data-en="User choice">User choice</td>
+                    <td data-ko="높음" data-en="High">High</td>
+                    <td data-ko="보상 제공 시" data-en="When offering rewards">When offering rewards</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="section">
+            <h2>
+                <span class="icon">❓</span>
+                <span data-ko="자주 묻는 질문" data-en="FAQ">FAQ</span>
+            </h2>
+
+            <ul>
+                <li>
+                    <span class="step-num">Q</span>
+                    <div class="step-content">
+                        <h4 data-ko="광고가 로딩되지 않아요" data-en="Ads won't load">Ads won't load</h4>
+                        <p data-ko="인터넷 연결을 확인하세요. Wi-Fi 또는 모바일 데이터가 활성화되어 있어야 합니다. 앱을 재시작해보세요." data-en="Check your internet connection. Make sure Wi-Fi or mobile data is enabled. Try restarting the app.">Check your internet connection. Make sure Wi-Fi or mobile data is enabled. Try restarting the app.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-num">Q</span>
+                    <div class="step-content">
+                        <h4 data-ko="보상을 받지 못했어요" data-en="I didn't receive my reward">I didn't receive my reward</h4>
+                        <p data-ko="리워드 광고를 끝까지 시청해야 보상이 지급됩니다. 광고 중간에 닫으면 보상을 받을 수 없습니다." data-en="You must watch the rewarded ad until the end to receive the reward. If you close it mid-way, you won't receive the reward.">You must watch the rewarded ad until the end to receive the reward. If you close it mid-way, you won't receive the reward.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-num">Q</span>
+                    <div class="step-content">
+                        <h4 data-ko="스크린샷 저장이 안 돼요" data-en="Can't save screenshots">Can't save screenshots</h4>
+                        <p data-ko="설정에서 갤러리/사진 접근 권한이 허용되어 있는지 확인하세요." data-en="Check if gallery/photo access permission is granted in your device settings.">Check if gallery/photo access permission is granted in your device settings.</p>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Ad Banner Bottom -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="1122334455"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2025 TAT (Today Ad Trend). All rights reserved.</p>
+            <div class="footer-links">
+                <a href="index.html" data-ko="홈" data-en="Home">Home</a>
+                <a href="guide.html" data-ko="가이드" data-en="Guide">Guide</a>
+                <a href="blog.html" data-ko="블로그" data-en="Blog">Blog</a>
+                <a href="https://brave-lifter-325.notion.site/Privacy-Policy-for-TAT-Today-Ad-Trend-2d8662e222b880f4be19c5d43d33de85" data-ko="개인정보처리방침" data-en="Privacy Policy">Privacy Policy</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        function setLang(lang) {
+            document.querySelectorAll('[data-ko]').forEach(el => {
+                el.textContent = el.getAttribute(`data-${lang}`);
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === (lang === 'ko' ? 'KO' : 'EN'));
+            });
+        }
+        setLang('en');
+    </script>
+</body>
+</html>

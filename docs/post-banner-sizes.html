@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Banner Ad Sizes Guide - TAT Blog</title>
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Complete guide to mobile banner ad sizes. Compare 320x50, 300x250, 320x100 and learn which size has the highest CTR and eCPM.">
+    <meta name="keywords" content="banner ads, mobile advertising, ad sizes, 320x50, 300x250, eCPM, CTR">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Complete Guide to Mobile Banner Ad Sizes: Which Size Works Best?">
+    <meta property="og:description" content="Compare banner ad sizes and learn which has the highest CTR and eCPM based on real data.">
+    <meta property="og:type" content="article">
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8143178103770527"
+         crossorigin="anonymous"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a1929 0%, #1a2744 100%);
+            min-height: 100vh;
+            color: #fff;
+            line-height: 1.8;
+        }
+
+        .gnb {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 25, 41, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            padding: 0 20px;
+        }
+
+        .gnb-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .gnb-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .gnb-logo img { width: 36px; height: 36px; border-radius: 8px; }
+
+        .gnb-logo span {
+            font-weight: 700;
+            font-size: 18px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gnb-nav { display: flex; gap: 32px; }
+        .gnb-nav a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .gnb-nav a:hover, .gnb-nav a.active { color: #4ade80; }
+
+        .gnb-lang { display: flex; gap: 8px; }
+        .lang-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .lang-btn:hover, .lang-btn.active { background: rgba(74, 222, 128, 0.3); }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 100px 20px 40px;
+        }
+
+        .article-header { margin-bottom: 40px; }
+        .article-meta { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
+        .article-category {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .article-date { color: #64748b; font-size: 14px; }
+
+        .article-header h1 {
+            font-size: 32px;
+            line-height: 1.3;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .article-excerpt { color: #94a3b8; font-size: 18px; line-height: 1.6; }
+
+        .featured-image {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+            border-radius: 16px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            margin-bottom: 40px;
+        }
+
+        .ad-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 32px 0;
+            text-align: center;
+            min-height: 100px;
+        }
+        .ad-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .article-content { color: #e2e8f0; }
+        .article-content h2 { font-size: 24px; margin: 40px 0 20px; color: #fff; }
+        .article-content h3 { font-size: 20px; margin: 32px 0 16px; color: #fff; }
+        .article-content p { margin-bottom: 20px; color: #cbd5e1; }
+        .article-content ul, .article-content ol { margin: 20px 0; padding-left: 24px; }
+        .article-content li { margin-bottom: 12px; color: #cbd5e1; }
+        .article-content strong { color: #fff; }
+
+        .highlight-box {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        .highlight-box h4 { color: #4ade80; margin-bottom: 12px; font-size: 16px; }
+        .highlight-box p { margin: 0; color: #94a3b8; }
+
+        .warning-box {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        .warning-box h4 { color: #fbbf24; margin-bottom: 12px; font-size: 16px; }
+        .warning-box p { margin: 0; color: #94a3b8; }
+
+        /* Banner Size Demos */
+        .banner-demo {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .banner-demo-label {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .banner-demo .banner-sample {
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0a1929;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 8px;
+        }
+
+        .banner-320x50 { width: 320px; height: 50px; }
+        .banner-320x100 { width: 320px; height: 100px; }
+        .banner-300x250 { width: 300px; height: 250px; }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .comparison-table th {
+            background: rgba(255, 255, 255, 0.05);
+            color: #4ade80;
+            font-weight: 600;
+        }
+        .comparison-table td { color: #94a3b8; }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .pros, .cons {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .pros h4 { color: #4ade80; margin-bottom: 12px; }
+        .cons h4 { color: #f87171; margin-bottom: 12px; }
+        .pros li, .cons li { color: #94a3b8; font-size: 14px; }
+
+        .author-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 48px 0;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .author-avatar {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+        .author-info h4 { font-size: 16px; margin-bottom: 4px; }
+        .author-info p { color: #94a3b8; font-size: 14px; margin: 0; }
+
+        .related-posts { margin: 48px 0; }
+        .related-posts h3 { font-size: 20px; margin-bottom: 24px; }
+        .related-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .related-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-decoration: none;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .related-card:hover { transform: translateY(-4px); background: rgba(255, 255, 255, 0.08); }
+        .related-card h4 { color: #fff; font-size: 15px; margin-bottom: 8px; line-height: 1.4; }
+        .related-card span { color: #64748b; font-size: 12px; }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+        }
+        footer p { color: #64748b; font-size: 14px; margin-bottom: 16px; }
+        .footer-links { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+        .footer-links a { color: #94a3b8; text-decoration: none; font-size: 14px; }
+        .footer-links a:hover { color: #4ade80; }
+
+        @media (max-width: 768px) {
+            .article-header h1 { font-size: 24px; }
+            .pros-cons { grid-template-columns: 1fr; }
+            .related-grid { grid-template-columns: 1fr; }
+            .author-box { flex-direction: column; text-align: center; }
+            .gnb-nav { gap: 16px; }
+            .banner-320x50, .banner-320x100, .banner-300x250 { max-width: 100%; }
+        }
+
+        @media (max-width: 480px) {
+            .gnb-lang { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- GNB -->
+    <nav class="gnb">
+        <div class="gnb-inner">
+            <a href="index.html" class="gnb-logo">
+                <img src="logo.png" alt="TAT">
+                <span>TAT</span>
+            </a>
+            <div class="gnb-nav">
+                <a href="index.html" data-ko="홈" data-en="Home">Home</a>
+                <a href="guide.html" data-ko="가이드" data-en="Guide">Guide</a>
+                <a href="blog.html" class="active" data-ko="블로그" data-en="Blog">Blog</a>
+            </div>
+            <div class="gnb-lang">
+                <button class="lang-btn active" onclick="setLang('ko')">KO</button>
+                <button class="lang-btn" onclick="setLang('en')">EN</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a href="blog.html" class="back-link" data-ko="← 블로그로 돌아가기" data-en="← Back to Blog">← Back to Blog</a>
+
+        <header class="article-header">
+            <div class="article-meta">
+                <span class="article-category" data-ko="가이드" data-en="Guide">Guide</span>
+                <span class="article-date">Dec 28, 2025</span>
+            </div>
+            <h1 data-ko="모바일 배너 광고 사이즈 완벽 가이드: 어떤 크기가 가장 효과적인가?" data-en="Complete Guide to Mobile Banner Ad Sizes: Which Size Works Best?">Complete Guide to Mobile Banner Ad Sizes: Which Size Works Best?</h1>
+            <p class="article-excerpt" data-ko="320x50, 300x250, 320x100... 다양한 배너 사이즈 중 어떤 것이 CTR과 eCPM이 가장 높을까요? 실제 데이터 기반으로 분석합니다." data-en="320x50, 300x250, 320x100... Which banner size has the highest CTR and eCPM? We analyze based on real data.">320x50, 300x250, 320x100... Which banner size has the highest CTR and eCPM? We analyze based on real data.</p>
+        </header>
+
+        <div class="featured-image">📱</div>
+
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="1234567890"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <article class="article-content">
+            <h2 data-ko="배너 광고 사이즈가 중요한 이유" data-en="Why Banner Ad Size Matters">Why Banner Ad Size Matters</h2>
+            <p data-ko="배너 광고 사이즈는 단순한 픽셀 수치가 아닙니다. 사이즈에 따라 사용자 경험, 클릭률(CTR), 수익(eCPM)이 크게 달라집니다. 올바른 사이즈 선택은 광고 수익을 2배 이상 높일 수 있습니다." data-en="Banner ad size isn't just about pixels. Size significantly affects user experience, click-through rate (CTR), and revenue (eCPM). Choosing the right size can more than double your ad revenue.">Banner ad size isn't just about pixels. Size significantly affects user experience, click-through rate (CTR), and revenue (eCPM). Choosing the right size can more than double your ad revenue.</p>
+
+            <h2 data-ko="주요 배너 사이즈 소개" data-en="Introduction to Main Banner Sizes">Introduction to Main Banner Sizes</h2>
+
+            <h3 data-ko="1. Standard Banner (320x50)" data-en="1. Standard Banner (320x50)">1. Standard Banner (320x50)</h3>
+            <p data-ko="가장 기본적이고 널리 사용되는 모바일 배너 사이즈입니다. 화면 하단에 고정되어 지속적으로 노출됩니다." data-en="The most basic and widely used mobile banner size. It stays fixed at the bottom of the screen for continuous exposure.">The most basic and widely used mobile banner size. It stays fixed at the bottom of the screen for continuous exposure.</p>
+
+            <div class="banner-demo">
+                <span class="banner-demo-label">320 x 50 pixels</span>
+                <div class="banner-sample banner-320x50">Standard Banner</div>
+            </div>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4 data-ko="장점" data-en="Pros">Pros</h4>
+                    <ul>
+                        <li data-ko="화면 차지 면적이 작아 사용자 경험 방해 최소화" data-en="Minimal screen space, minimal user disruption">Minimal screen space, minimal user disruption</li>
+                        <li data-ko="거의 모든 광고 네트워크에서 높은 Fill Rate" data-en="High fill rate across almost all ad networks">High fill rate across almost all ad networks</li>
+                        <li data-ko="앱 전체에 지속적으로 노출 가능" data-en="Can be displayed continuously throughout app">Can be displayed continuously throughout app</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4 data-ko="단점" data-en="Cons">Cons</h4>
+                    <ul>
+                        <li data-ko="eCPM이 상대적으로 낮음 ($0.5-$2)" data-en="Relatively low eCPM ($0.5-$2)">Relatively low eCPM ($0.5-$2)</li>
+                        <li data-ko="작은 크기로 인해 CTR이 낮음" data-en="Low CTR due to small size">Low CTR due to small size</li>
+                        <li data-ko="크리에이티브 표현에 제한" data-en="Limited creative expression">Limited creative expression</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 data-ko="2. Large Banner (320x100)" data-en="2. Large Banner (320x100)">2. Large Banner (320x100)</h3>
+            <p data-ko="Standard Banner의 2배 높이로, 더 큰 가시성과 높은 CTR을 제공합니다." data-en="Twice the height of Standard Banner, providing greater visibility and higher CTR.">Twice the height of Standard Banner, providing greater visibility and higher CTR.</p>
+
+            <div class="banner-demo">
+                <span class="banner-demo-label">320 x 100 pixels</span>
+                <div class="banner-sample banner-320x100">Large Banner</div>
+            </div>
+
+            <div class="highlight-box">
+                <h4 data-ko="💡 추천 상황" data-en="💡 Recommended Use">💡 Recommended Use</h4>
+                <p data-ko="화면 하단에 여유 공간이 있을 때, Standard Banner보다 약 20-30% 높은 eCPM을 기대할 수 있습니다." data-en="When there's room at the bottom of the screen, you can expect 20-30% higher eCPM than Standard Banner.">When there's room at the bottom of the screen, you can expect 20-30% higher eCPM than Standard Banner.</p>
+            </div>
+
+            <h3 data-ko="3. Medium Rectangle (300x250)" data-en="3. Medium Rectangle (300x250)">3. Medium Rectangle (300x250)</h3>
+            <p data-ko="가장 높은 eCPM을 자랑하는 배너 사이즈입니다. 콘텐츠 사이에 삽입되어 높은 주목도를 얻습니다." data-en="The banner size with the highest eCPM. It's inserted between content for high visibility.">The banner size with the highest eCPM. It's inserted between content for high visibility.</p>
+
+            <div class="banner-demo">
+                <span class="banner-demo-label">300 x 250 pixels</span>
+                <div class="banner-sample banner-300x250">Medium Rectangle</div>
+            </div>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4 data-ko="장점" data-en="Pros">Pros</h4>
+                    <ul>
+                        <li data-ko="배너 중 가장 높은 eCPM ($2-$5)" data-en="Highest eCPM among banners ($2-$5)">Highest eCPM among banners ($2-$5)</li>
+                        <li data-ko="광고주들이 선호하여 높은 Fill Rate" data-en="High fill rate due to advertiser preference">High fill rate due to advertiser preference</li>
+                        <li data-ko="풍부한 크리에이티브 표현 가능" data-en="Rich creative expression possible">Rich creative expression possible</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4 data-ko="단점" data-en="Cons">Cons</h4>
+                    <ul>
+                        <li data-ko="화면 차지 면적이 커서 위치 선정 중요" data-en="Large screen area requires careful positioning">Large screen area requires careful positioning</li>
+                        <li data-ko="스크롤 피드에만 적합" data-en="Only suitable for scrollable feeds">Only suitable for scrollable feeds</li>
+                        <li data-ko="과다 사용 시 사용자 이탈 우려" data-en="Overuse may cause user churn">Overuse may cause user churn</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="ad-container">
+                <div class="ad-label">Advertisement</div>
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-8143178103770527"
+                     data-ad-slot="0987654321"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
+
+            <h3 data-ko="4. Adaptive Banner (동적 사이즈)" data-en="4. Adaptive Banner (Dynamic Size)">4. Adaptive Banner (Dynamic Size)</h3>
+            <p data-ko="디바이스 화면 너비에 맞춰 자동으로 최적의 사이즈를 결정하는 스마트 배너입니다. Google AdMob에서 강력히 권장하는 방식입니다." data-en="A smart banner that automatically determines the optimal size based on device screen width. This is strongly recommended by Google AdMob.">A smart banner that automatically determines the optimal size based on device screen width. This is strongly recommended by Google AdMob.</p>
+
+            <div class="highlight-box">
+                <h4 data-ko="🎯 2025년 권장사항" data-en="🎯 2025 Recommendation">🎯 2025 Recommendation</h4>
+                <p data-ko="Adaptive Banner는 다양한 디바이스에서 최적의 크기로 표시되어 평균 20% 더 높은 수익을 창출합니다. 새 프로젝트에서는 Adaptive Banner를 기본으로 사용하세요." data-en="Adaptive Banner displays at optimal size across devices, generating 20% higher revenue on average. Use Adaptive Banner as default for new projects.">Adaptive Banner displays at optimal size across devices, generating 20% higher revenue on average. Use Adaptive Banner as default for new projects.</p>
+            </div>
+
+            <h2 data-ko="배너 사이즈별 성능 비교" data-en="Performance Comparison by Banner Size">Performance Comparison by Banner Size</h2>
+
+            <table class="comparison-table">
+                <tr>
+                    <th data-ko="사이즈" data-en="Size">Size</th>
+                    <th data-ko="평균 eCPM" data-en="Avg eCPM">Avg eCPM</th>
+                    <th data-ko="CTR" data-en="CTR">CTR</th>
+                    <th data-ko="Fill Rate" data-en="Fill Rate">Fill Rate</th>
+                    <th data-ko="권장도" data-en="Rating">Rating</th>
+                </tr>
+                <tr>
+                    <td>320x50</td>
+                    <td>$0.5-2</td>
+                    <td>0.1-0.3%</td>
+                    <td>95%+</td>
+                    <td data-ko="기본" data-en="Basic">Basic</td>
+                </tr>
+                <tr>
+                    <td>320x100</td>
+                    <td>$1-3</td>
+                    <td>0.2-0.4%</td>
+                    <td>90%+</td>
+                    <td data-ko="좋음" data-en="Good">Good</td>
+                </tr>
+                <tr>
+                    <td>300x250</td>
+                    <td>$2-5</td>
+                    <td>0.3-0.8%</td>
+                    <td>95%+</td>
+                    <td data-ko="최고" data-en="Best">Best</td>
+                </tr>
+                <tr>
+                    <td>Adaptive</td>
+                    <td>$1-4</td>
+                    <td>0.2-0.5%</td>
+                    <td>95%+</td>
+                    <td data-ko="권장" data-en="Recommended">Recommended</td>
+                </tr>
+            </table>
+
+            <h2 data-ko="상황별 최적의 배너 선택" data-en="Optimal Banner Selection by Situation">Optimal Banner Selection by Situation</h2>
+
+            <ul>
+                <li data-ko="<strong>게임 앱:</strong> 하단 고정 배너로 320x50 또는 Adaptive 사용, 레벨 사이에 300x250 삽입" data-en="<strong>Gaming Apps:</strong> Use 320x50 or Adaptive as fixed bottom banner, insert 300x250 between levels"><strong>Gaming Apps:</strong> Use 320x50 or Adaptive as fixed bottom banner, insert 300x250 between levels</li>
+                <li data-ko="<strong>뉴스/피드 앱:</strong> 콘텐츠 사이에 300x250 삽입, 화면 하단에 Adaptive Banner" data-en="<strong>News/Feed Apps:</strong> Insert 300x250 between content, Adaptive Banner at bottom"><strong>News/Feed Apps:</strong> Insert 300x250 between content, Adaptive Banner at bottom</li>
+                <li data-ko="<strong>유틸리티 앱:</strong> 화면 하단에 320x50 또는 320x100 고정" data-en="<strong>Utility Apps:</strong> Fix 320x50 or 320x100 at bottom"><strong>Utility Apps:</strong> Fix 320x50 or 320x100 at bottom</li>
+                <li data-ko="<strong>다국가 서비스:</strong> Adaptive Banner 필수 (디바이스 다양성 대응)" data-en="<strong>Multi-country Services:</strong> Adaptive Banner required (handles device diversity)"><strong>Multi-country Services:</strong> Adaptive Banner required (handles device diversity)</li>
+            </ul>
+
+            <div class="warning-box">
+                <h4 data-ko="⚠️ 주의사항" data-en="⚠️ Warning">⚠️ Warning</h4>
+                <p data-ko="300x250 배너를 화면당 2개 이상 배치하거나, 스크롤 없이 보이는 영역에 배치하면 Google 정책 위반이 될 수 있습니다. 항상 광고 정책을 확인하세요." data-en="Placing more than 2 300x250 banners per screen or placing them in non-scrollable areas may violate Google policies. Always check ad policies.">Placing more than 2 300x250 banners per screen or placing them in non-scrollable areas may violate Google policies. Always check ad policies.</p>
+            </div>
+
+            <h2 data-ko="결론: 어떤 사이즈를 선택해야 할까?" data-en="Conclusion: Which Size Should You Choose?">Conclusion: Which Size Should You Choose?</h2>
+            <p data-ko="정답은 '앱의 UI와 사용자 행동에 맞는 조합'입니다. 수익 극대화를 위해서는 다음 전략을 권장합니다:" data-en="The answer is 'the right combination for your app's UI and user behavior.' For maximum revenue, we recommend the following strategy:">The answer is 'the right combination for your app's UI and user behavior.' For maximum revenue, we recommend the following strategy:</p>
+
+            <ol>
+                <li data-ko="기본 배너로 <strong>Adaptive Banner</strong>를 사용하여 다양한 디바이스 대응" data-en="Use <strong>Adaptive Banner</strong> as default to handle various devices">Use <strong>Adaptive Banner</strong> as default to handle various devices</li>
+                <li data-ko="피드/스크롤 콘텐츠가 있다면 <strong>300x250</strong>을 중간에 삽입" data-en="Insert <strong>300x250</strong> in the middle if you have feed/scroll content">Insert <strong>300x250</strong> in the middle if you have feed/scroll content</li>
+                <li data-ko>A/B 테스트로 사이즈별 성과를 측정하고 최적화" data-en="Measure and optimize performance by size through A/B testing">Measure and optimize performance by size through A/B testing</li>
+            </ol>
+
+            <div class="highlight-box">
+                <h4 data-ko="📱 TAT 앱에서 확인하기" data-en="📱 Check in TAT App">📱 Check in TAT App</h4>
+                <p data-ko="TAT 앱의 Banner 탭에서 다양한 배너 사이즈를 직접 확인하고 비교해보세요. 실제 광고가 어떻게 보이는지 경험할 수 있습니다." data-en="Check and compare various banner sizes in the Banner tab of the TAT app. You can experience how actual ads look.">Check and compare various banner sizes in the Banner tab of the TAT app. You can experience how actual ads look.</p>
+            </div>
+        </article>
+
+        <div class="author-box">
+            <div class="author-avatar">✍️</div>
+            <div class="author-info">
+                <h4>TAT Team</h4>
+                <p data-ko="모바일 광고 트렌드와 인사이트를 공유합니다." data-en="Sharing mobile advertising trends and insights.">Sharing mobile advertising trends and insights.</p>
+            </div>
+        </div>
+
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="1122334455"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <section class="related-posts">
+            <h3 data-ko="관련 글" data-en="Related Posts">Related Posts</h3>
+            <div class="related-grid">
+                <a href="post-rewarded-ads-2025.html" class="related-card">
+                    <h4 data-ko="2025년 리워드 광고 트렌드: 왜 모든 앱이 도입해야 하는가" data-en="2025 Rewarded Ad Trends: Why Every App Should Implement Them">2025 Rewarded Ad Trends: Why Every App Should Implement Them</h4>
+                    <span>Dec 30, 2025</span>
+                </a>
+                <a href="post-ecpm-optimization.html" class="related-card">
+                    <h4 data-ko="eCPM 최적화 전략: 광고 수익을 2배로 늘리는 방법" data-en="eCPM Optimization Strategy: How to Double Your Ad Revenue">eCPM Optimization Strategy: How to Double Your Ad Revenue</h4>
+                    <span>Dec 25, 2025</span>
+                </a>
+            </div>
+        </section>
+
+        <footer>
+            <p>&copy; 2025 TAT (Today Ad Trend). All rights reserved.</p>
+            <div class="footer-links">
+                <a href="index.html" data-ko="홈" data-en="Home">Home</a>
+                <a href="guide.html" data-ko="가이드" data-en="Guide">Guide</a>
+                <a href="blog.html" data-ko="블로그" data-en="Blog">Blog</a>
+                <a href="https://brave-lifter-325.notion.site/Privacy-Policy-for-TAT-Today-Ad-Trend-2d8662e222b880f4be19c5d43d33de85" data-ko="개인정보처리방침" data-en="Privacy Policy">Privacy Policy</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        function setLang(lang) {
+            document.querySelectorAll('[data-ko]').forEach(el => {
+                if (el.tagName === 'LI' || el.tagName === 'P') {
+                    el.innerHTML = el.getAttribute(`data-${lang}`);
+                } else {
+                    el.textContent = el.getAttribute(`data-${lang}`);
+                }
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === (lang === 'ko' ? 'KO' : 'EN'));
+            });
+        }
+        setLang('en');
+    </script>
+</body>
+</html>

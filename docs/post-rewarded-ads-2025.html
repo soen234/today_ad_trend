@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 Rewarded Ad Trends - TAT Blog</title>
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Rewarded ads are the most effective ad format that generates high revenue without harming user experience. Learn the latest 2025 trends.">
+    <meta name="keywords" content="rewarded ads, mobile advertising, ad monetization, 2025 trends, eCPM">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="2025 Rewarded Ad Trends: Why Every App Should Implement Them">
+    <meta property="og:description" content="Rewarded ads are the most effective ad format that generates high revenue without harming user experience.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://todayadtrend.com/post-rewarded-ads-2025.html">
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8143178103770527"
+         crossorigin="anonymous"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a1929 0%, #1a2744 100%);
+            min-height: 100vh;
+            color: #fff;
+            line-height: 1.8;
+        }
+
+        /* GNB */
+        .gnb {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 25, 41, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            padding: 0 20px;
+        }
+
+        .gnb-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .gnb-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .gnb-logo img {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+
+        .gnb-logo span {
+            font-weight: 700;
+            font-size: 18px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gnb-nav {
+            display: flex;
+            gap: 32px;
+        }
+
+        .gnb-nav a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .gnb-nav a:hover, .gnb-nav a.active {
+            color: #4ade80;
+        }
+
+        .gnb-lang {
+            display: flex;
+            gap: 8px;
+        }
+
+        .lang-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .lang-btn:hover, .lang-btn.active {
+            background: rgba(74, 222, 128, 0.3);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 100px 20px 40px;
+        }
+
+        /* Article Header */
+        .article-header {
+            margin-bottom: 40px;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .article-category {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .article-date {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .article-header h1 {
+            font-size: 32px;
+            line-height: 1.3;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .article-excerpt {
+            color: #94a3b8;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        /* Featured Image */
+        .featured-image {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+            border-radius: 16px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            margin-bottom: 40px;
+        }
+
+        /* Ad Container */
+        .ad-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 32px 0;
+            text-align: center;
+            min-height: 100px;
+        }
+
+        .ad-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        /* Article Content */
+        .article-content {
+            color: #e2e8f0;
+        }
+
+        .article-content h2 {
+            font-size: 24px;
+            margin: 40px 0 20px;
+            color: #fff;
+        }
+
+        .article-content h3 {
+            font-size: 20px;
+            margin: 32px 0 16px;
+            color: #fff;
+        }
+
+        .article-content p {
+            margin-bottom: 20px;
+            color: #cbd5e1;
+        }
+
+        .article-content ul, .article-content ol {
+            margin: 20px 0;
+            padding-left: 24px;
+        }
+
+        .article-content li {
+            margin-bottom: 12px;
+            color: #cbd5e1;
+        }
+
+        .article-content strong {
+            color: #fff;
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .highlight-box h4 {
+            color: #4ade80;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .highlight-box p {
+            margin: 0;
+            color: #94a3b8;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 32px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-card .label {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        /* Quote */
+        blockquote {
+            border-left: 4px solid #4ade80;
+            padding-left: 24px;
+            margin: 32px 0;
+            font-style: italic;
+            color: #94a3b8;
+        }
+
+        /* Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-table th {
+            background: rgba(255, 255, 255, 0.05);
+            color: #4ade80;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            color: #94a3b8;
+        }
+
+        /* Author Box */
+        .author-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 48px 0;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .author-avatar {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .author-info h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .author-info p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* Related Posts */
+        .related-posts {
+            margin: 48px 0;
+        }
+
+        .related-posts h3 {
+            font-size: 20px;
+            margin-bottom: 24px;
+        }
+
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .related-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-decoration: none;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .related-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .related-card h4 {
+            color: #fff;
+            font-size: 15px;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .related-card span {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        /* Back Link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+        }
+
+        footer p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-links a:hover {
+            color: #4ade80;
+        }
+
+        @media (max-width: 768px) {
+            .article-header h1 { font-size: 24px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .related-grid { grid-template-columns: 1fr; }
+            .author-box { flex-direction: column; text-align: center; }
+            .gnb-nav { gap: 16px; }
+        }
+
+        @media (max-width: 480px) {
+            .gnb-lang { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- GNB -->
+    <nav class="gnb">
+        <div class="gnb-inner">
+            <a href="index.html" class="gnb-logo">
+                <img src="logo.png" alt="TAT">
+                <span>TAT</span>
+            </a>
+            <div class="gnb-nav">
+                <a href="index.html" data-ko="홈" data-en="Home">Home</a>
+                <a href="guide.html" data-ko="가이드" data-en="Guide">Guide</a>
+                <a href="blog.html" class="active" data-ko="블로그" data-en="Blog">Blog</a>
+            </div>
+            <div class="gnb-lang">
+                <button class="lang-btn active" onclick="setLang('ko')">KO</button>
+                <button class="lang-btn" onclick="setLang('en')">EN</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Back Link -->
+        <a href="blog.html" class="back-link" data-ko="← 블로그로 돌아가기" data-en="← Back to Blog">← Back to Blog</a>
+
+        <!-- Article Header -->
+        <header class="article-header">
+            <div class="article-meta">
+                <span class="article-category" data-ko="트렌드" data-en="Trends">Trends</span>
+                <span class="article-date">Dec 30, 2025</span>
+            </div>
+            <h1 data-ko="2025년 리워드 광고 트렌드: 왜 모든 앱이 도입해야 하는가" data-en="2025 Rewarded Ad Trends: Why Every App Should Implement Them">2025 Rewarded Ad Trends: Why Every App Should Implement Them</h1>
+            <p class="article-excerpt" data-ko="리워드 광고는 사용자 경험을 해치지 않으면서 높은 수익을 창출하는 가장 효과적인 광고 포맷입니다. 2025년 최신 트렌드와 성공 사례를 분석합니다." data-en="Rewarded ads are the most effective ad format that generates high revenue without harming user experience. We analyze the latest 2025 trends and success stories.">Rewarded ads are the most effective ad format that generates high revenue without harming user experience. We analyze the latest 2025 trends and success stories.</p>
+        </header>
+
+        <!-- Featured Image -->
+        <div class="featured-image">🎁</div>
+
+        <!-- Ad Banner Top -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="1234567890"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <!-- Article Content -->
+        <article class="article-content">
+            <h2 data-ko="리워드 광고란?" data-en="What Are Rewarded Ads?">What Are Rewarded Ads?</h2>
+            <p data-ko="리워드 광고(보상형 광고)는 사용자가 자발적으로 광고를 시청하고 그 대가로 앱 내 보상을 받는 광고 형식입니다. 게임의 추가 생명, 프리미엄 콘텐츠 잠금 해제, 인앱 화폐 등이 대표적인 보상입니다." data-en="Rewarded ads are an ad format where users voluntarily watch ads in exchange for in-app rewards. Common rewards include extra lives in games, unlocking premium content, and in-app currency.">Rewarded ads are an ad format where users voluntarily watch ads in exchange for in-app rewards. Common rewards include extra lives in games, unlocking premium content, and in-app currency.</p>
+
+            <p data-ko="사용자가 스스로 선택하여 시청하기 때문에 광고에 대한 거부감이 적고, 광고주 입장에서도 집중도 높은 시청자를 확보할 수 있어 윈-윈 구조를 만듭니다." data-en="Because users choose to watch voluntarily, there's less resistance to ads, and advertisers can secure highly engaged viewers, creating a win-win structure.">Because users choose to watch voluntarily, there's less resistance to ads, and advertisers can secure highly engaged viewers, creating a win-win structure.</p>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="number" data-ko="$15-30" data-en="$15-30">$15-30</div>
+                    <div class="label" data-ko="평균 eCPM" data-en="Average eCPM">Average eCPM</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" data-ko="85%" data-en="85%">85%</div>
+                    <div class="label" data-ko="완료율" data-en="Completion Rate">Completion Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" data-ko="4.2x" data-en="4.2x">4.2x</div>
+                    <div class="label" data-ko="배너 대비 수익" data-en="vs Banner Revenue">vs Banner Revenue</div>
+                </div>
+            </div>
+
+            <h2 data-ko="2025년 리워드 광고 트렌드" data-en="2025 Rewarded Ad Trends">2025 Rewarded Ad Trends</h2>
+
+            <h3 data-ko="1. 비게임 앱으로의 확대" data-en="1. Expansion to Non-Gaming Apps">1. Expansion to Non-Gaming Apps</h3>
+            <p data-ko="과거에는 주로 게임 앱에서 사용되던 리워드 광고가 이제 뉴스, 유틸리티, 교육, 피트니스 앱 등 다양한 카테고리로 확산되고 있습니다. 프리미엄 기능 체험, 광고 없는 시간, 추가 콘텐츠 등을 보상으로 제공합니다." data-en="Rewarded ads, once primarily used in gaming apps, are now spreading to various categories including news, utility, education, and fitness apps. They offer premium feature trials, ad-free time, and additional content as rewards.">Rewarded ads, once primarily used in gaming apps, are now spreading to various categories including news, utility, education, and fitness apps. They offer premium feature trials, ad-free time, and additional content as rewards.</p>
+
+            <h3 data-ko="2. 플레이어블 리워드 광고의 부상" data-en="2. Rise of Playable Rewarded Ads">2. Rise of Playable Rewarded Ads</h3>
+            <p data-ko="단순히 동영상을 시청하는 것에서 벗어나, 사용자가 직접 미니 게임을 플레이하는 인터랙티브 리워드 광고가 증가하고 있습니다. 이는 더 높은 참여도와 브랜드 기억도로 이어집니다." data-en="Moving beyond simply watching videos, interactive rewarded ads where users play mini-games are increasing. This leads to higher engagement and brand recall.">Moving beyond simply watching videos, interactive rewarded ads where users play mini-games are increasing. This leads to higher engagement and brand recall.</p>
+
+            <div class="highlight-box">
+                <h4 data-ko="💡 인사이트" data-en="💡 Insight">💡 Insight</h4>
+                <p data-ko="플레이어블 광고는 일반 동영상 광고보다 전환율이 평균 30% 더 높습니다. 사용자가 적극적으로 참여하기 때문입니다." data-en="Playable ads have an average 30% higher conversion rate than regular video ads. This is because users actively participate.">Playable ads have an average 30% higher conversion rate than regular video ads. This is because users actively participate.</p>
+            </div>
+
+            <h3 data-ko="3. AI 기반 개인화 보상" data-en="3. AI-Powered Personalized Rewards">3. AI-Powered Personalized Rewards</h3>
+            <p data-ko="머신러닝을 활용하여 각 사용자에게 가장 매력적인 보상을 제안하는 시스템이 발전하고 있습니다. 사용자 행동 패턴을 분석하여 최적의 타이밍에 최적의 보상을 제안합니다." data-en="Systems using machine learning to suggest the most attractive rewards to each user are evolving. They analyze user behavior patterns to offer optimal rewards at optimal times.">Systems using machine learning to suggest the most attractive rewards to each user are evolving. They analyze user behavior patterns to offer optimal rewards at optimal times.</p>
+
+            <!-- Ad Banner Middle -->
+            <div class="ad-container">
+                <div class="ad-label">Advertisement</div>
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-8143178103770527"
+                     data-ad-slot="0987654321"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
+
+            <h2 data-ko="리워드 광고 vs 다른 광고 포맷" data-en="Rewarded Ads vs Other Ad Formats">Rewarded Ads vs Other Ad Formats</h2>
+
+            <table class="comparison-table">
+                <tr>
+                    <th data-ko="광고 포맷" data-en="Ad Format">Ad Format</th>
+                    <th data-ko="평균 eCPM" data-en="Avg eCPM">Avg eCPM</th>
+                    <th data-ko="사용자 만족도" data-en="User Satisfaction">User Satisfaction</th>
+                    <th data-ko="완료율" data-en="Completion Rate">Completion Rate</th>
+                </tr>
+                <tr>
+                    <td>Rewarded</td>
+                    <td>$15-30</td>
+                    <td data-ko="높음" data-en="High">High</td>
+                    <td>85%+</td>
+                </tr>
+                <tr>
+                    <td>Interstitial</td>
+                    <td>$4-8</td>
+                    <td data-ko="보통" data-en="Medium">Medium</td>
+                    <td>60-70%</td>
+                </tr>
+                <tr>
+                    <td>Banner</td>
+                    <td>$0.5-2</td>
+                    <td data-ko="낮음" data-en="Low">Low</td>
+                    <td>N/A</td>
+                </tr>
+            </table>
+
+            <h2 data-ko="성공적인 리워드 광고 구현 전략" data-en="Strategies for Successful Rewarded Ad Implementation">Strategies for Successful Rewarded Ad Implementation</h2>
+
+            <ol>
+                <li data-ko="<strong>가치 있는 보상 제공:</strong> 사용자가 30초 광고를 볼 만한 충분한 가치를 제공해야 합니다. 너무 적은 보상은 참여율을 낮춥니다." data-en="<strong>Offer Valuable Rewards:</strong> Provide enough value worth watching a 30-second ad. Too little reward decreases participation."><strong>Offer Valuable Rewards:</strong> Provide enough value worth watching a 30-second ad. Too little reward decreases participation.</li>
+                <li data-ko="<strong>자연스러운 타이밍:</strong> 게임 오버 시, 레벨 완료 시 등 사용자가 추가 자원이 필요한 순간에 제안합니다." data-en="<strong>Natural Timing:</strong> Offer at moments when users need extra resources, like game over or level completion."><strong>Natural Timing:</strong> Offer at moments when users need extra resources, like game over or level completion.</li>
+                <li data-ko="<strong>빈도 제한:</strong> 시간당 또는 세션당 리워드 광고 노출 횟수를 제한하여 피로도를 관리합니다." data-en="<strong>Frequency Capping:</strong> Limit rewarded ad impressions per hour or session to manage fatigue."><strong>Frequency Capping:</strong> Limit rewarded ad impressions per hour or session to manage fatigue.</li>
+                <li data-ko="<strong>명확한 CTA:</strong> '광고 보고 보석 5개 받기'처럼 구체적인 보상을 명시합니다." data-en="<strong>Clear CTA:</strong> Specify concrete rewards like 'Watch ad and get 5 gems'."><strong>Clear CTA:</strong> Specify concrete rewards like 'Watch ad and get 5 gems'.</li>
+            </ol>
+
+            <blockquote data-ko="&ldquo;리워드 광고는 사용자에게 선택권을 주는 것입니다. 강제가 아닌 선택이 핵심입니다.&rdquo;" data-en="&ldquo;Rewarded ads are about giving users a choice. Choice, not force, is the key.&rdquo;">"Rewarded ads are about giving users a choice. Choice, not force, is the key."</blockquote>
+
+            <h2 data-ko="결론" data-en="Conclusion">Conclusion</h2>
+            <p data-ko="2025년에도 리워드 광고는 모바일 광고 수익화의 핵심 전략으로 자리잡고 있습니다. 사용자 경험을 해치지 않으면서 높은 수익을 창출할 수 있는 유일한 광고 포맷이기 때문입니다. 아직 리워드 광고를 도입하지 않았다면, 지금이 시작할 최적의 시기입니다." data-en="In 2025, rewarded ads continue to be a core strategy for mobile ad monetization. This is because they're the only ad format that can generate high revenue without harming user experience. If you haven't implemented rewarded ads yet, now is the optimal time to start.">In 2025, rewarded ads continue to be a core strategy for mobile ad monetization. This is because they're the only ad format that can generate high revenue without harming user experience. If you haven't implemented rewarded ads yet, now is the optimal time to start.</p>
+
+            <div class="highlight-box">
+                <h4 data-ko="📱 TAT 앱에서 직접 체험하기" data-en="📱 Try it in TAT App">📱 Try it in TAT App</h4>
+                <p data-ko="TAT 앱의 Rewarded 탭에서 실제 리워드 광고가 어떻게 동작하는지 직접 체험해보세요. 사용자 관점에서 광고 흐름을 이해할 수 있습니다." data-en="Experience how rewarded ads actually work in the Rewarded tab of the TAT app. You can understand the ad flow from a user's perspective.">Experience how rewarded ads actually work in the Rewarded tab of the TAT app. You can understand the ad flow from a user's perspective.</p>
+            </div>
+        </article>
+
+        <!-- Author Box -->
+        <div class="author-box">
+            <div class="author-avatar">✍️</div>
+            <div class="author-info">
+                <h4>TAT Team</h4>
+                <p data-ko="모바일 광고 트렌드와 인사이트를 공유합니다." data-en="Sharing mobile advertising trends and insights.">Sharing mobile advertising trends and insights.</p>
+            </div>
+        </div>
+
+        <!-- Ad Banner Bottom -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="1122334455"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <!-- Related Posts -->
+        <section class="related-posts">
+            <h3 data-ko="관련 글" data-en="Related Posts">Related Posts</h3>
+            <div class="related-grid">
+                <a href="post-ecpm-optimization.html" class="related-card">
+                    <h4 data-ko="eCPM 최적화 전략: 광고 수익을 2배로 늘리는 방법" data-en="eCPM Optimization Strategy: How to Double Your Ad Revenue">eCPM Optimization Strategy: How to Double Your Ad Revenue</h4>
+                    <span>Dec 25, 2025</span>
+                </a>
+                <a href="post-interstitial-best-practices.html" class="related-card">
+                    <h4 data-ko="전면 광고 베스트 프랙티스: 이탈률 없이 수익 극대화하기" data-en="Interstitial Ad Best Practices: Maximize Revenue Without Losing Users">Interstitial Ad Best Practices: Maximize Revenue Without Losing Users</h4>
+                    <span>Dec 22, 2025</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2025 TAT (Today Ad Trend). All rights reserved.</p>
+            <div class="footer-links">
+                <a href="index.html" data-ko="홈" data-en="Home">Home</a>
+                <a href="guide.html" data-ko="가이드" data-en="Guide">Guide</a>
+                <a href="blog.html" data-ko="블로그" data-en="Blog">Blog</a>
+                <a href="https://brave-lifter-325.notion.site/Privacy-Policy-for-TAT-Today-Ad-Trend-2d8662e222b880f4be19c5d43d33de85" data-ko="개인정보처리방침" data-en="Privacy Policy">Privacy Policy</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        function setLang(lang) {
+            document.querySelectorAll('[data-ko]').forEach(el => {
+                if (el.tagName === 'LI' || el.tagName === 'P' || el.tagName === 'BLOCKQUOTE') {
+                    el.innerHTML = el.getAttribute(`data-${lang}`);
+                } else {
+                    el.textContent = el.getAttribute(`data-${lang}`);
+                }
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === (lang === 'ko' ? 'KO' : 'EN'));
+            });
+        }
+        setLang('en');
+    </script>
+</body>
+</html>

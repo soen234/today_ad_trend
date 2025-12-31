@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAT - Today Ad Trend</title>
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8143178103770527"
+         crossorigin="anonymous"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a1929 0%, #1a2744 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        /* GNB */
+        .gnb {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 25, 41, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1001;
+            padding: 0 20px;
+        }
+
+        .gnb-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .gnb-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .gnb-logo img {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+
+        .gnb-logo span {
+            font-weight: 700;
+            font-size: 18px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gnb-nav {
+            display: flex;
+            gap: 32px;
+        }
+
+        .gnb-nav a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .gnb-nav a:hover, .gnb-nav a.active {
+            color: #4ade80;
+        }
+
+        .gnb-lang {
+            display: flex;
+            gap: 8px;
+        }
+
+        .gnb-lang .lang-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .gnb-lang .lang-btn:hover, .gnb-lang .lang-btn.active {
+            background: rgba(74, 222, 128, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            .gnb-lang { display: none; }
+            .gnb-nav { gap: 16px; }
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            padding-top: 80px;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 40px 0 60px;
+        }
+
+        .app-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 28px;
+            margin: 0 auto 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+        }
+
+        .app-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .tagline {
+            font-size: 20px;
+            color: #94a3b8;
+            margin-bottom: 32px;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 28px;
+            background: #fff;
+            color: #0a1929;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .download-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Ad Banner */
+        .ad-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 32px 0;
+            text-align: center;
+            min-height: 100px;
+        }
+
+        .ad-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        /* Features */
+        .features {
+            padding: 60px 0;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 48px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 28px;
+            text-align: center;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        /* Support Section */
+        .support {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 48px;
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        .support h2 {
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+
+        .support p {
+            color: #94a3b8;
+            margin-bottom: 24px;
+        }
+
+        .support-email {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            color: #0a1929;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .support-email:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(74, 222, 128, 0.3);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+        }
+
+        footer p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: #4ade80;
+        }
+
+        /* Language Switch */
+        .lang-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .lang-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .lang-btn:hover, .lang-btn.active {
+            background: rgba(74, 222, 128, 0.3);
+        }
+
+        /* Multiplex Ad Container */
+        .ad-multiplex {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 32px 0;
+            text-align: center;
+        }
+
+        /* In-article Ad */
+        .ad-in-article {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 24px 0;
+            text-align: center;
+        }
+
+        /* Anchor Ad Container (Sticky Bottom) */
+        .ad-anchor {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 25, 41, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .ad-anchor .close-btn {
+            position: absolute;
+            top: -12px;
+            right: 12px;
+            width: 24px;
+            height: 24px;
+            background: #374151;
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ad-anchor .close-btn:hover {
+            background: #4b5563;
+        }
+
+        /* Add padding to body for anchor ad */
+        body {
+            padding-bottom: 70px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 36px; }
+            .hero .tagline { font-size: 16px; }
+            .support { padding: 32px 20px; }
+            .app-icon { width: 100px; height: 100px; }
+            body { padding-bottom: 60px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- GNB -->
+    <nav class="gnb">
+        <div class="gnb-inner">
+            <a href="index.html" class="gnb-logo">
+                <img src="logo.png" alt="TAT">
+                <span>TAT</span>
+            </a>
+            <div class="gnb-nav">
+                <a href="index.html" class="active" data-ko="홈" data-en="Home">Home</a>
+                <a href="guide.html" data-ko="가이드" data-en="Guide">Guide</a>
+                <a href="blog.html" data-ko="블로그" data-en="Blog">Blog</a>
+            </div>
+            <div class="gnb-lang">
+                <button class="lang-btn active" onclick="setLang('ko')">KO</button>
+                <button class="lang-btn" onclick="setLang('en')">EN</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Hero -->
+        <section class="hero">
+            <div class="app-icon">
+                <img src="logo.png" alt="TAT Logo">
+            </div>
+            <h1>TAT</h1>
+            <p class="tagline" data-ko="Today Ad Trend - 광고 트렌드를 한눈에" data-en="Today Ad Trend - Explore Mobile Ad Formats">Today Ad Trend - Explore Mobile Ad Formats</p>
+
+            <div class="download-buttons">
+                <a href="#" class="download-btn">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                    <span>App Store</span>
+                </a>
+                <a href="#" class="download-btn">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/></svg>
+                    <span>Google Play</span>
+                </a>
+            </div>
+            <a href="guide.html" style="display: inline-block; margin-top: 24px; color: #4ade80; text-decoration: none; font-size: 14px;" data-ko="📖 앱 사용 가이드 보기" data-en="📖 View App User Guide">📖 View App User Guide</a>
+        </section>
+
+        <!-- Ad Banner Top -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="1234567890"
+                 data-ad-format="horizontal"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <!-- Features -->
+        <section class="features">
+            <h2 data-ko="주요 기능" data-en="Features">Features</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3 data-ko="배너 광고" data-en="Banner Ads">Banner Ads</h3>
+                    <p data-ko="다양한 크기의 배너 광고를 확인하세요" data-en="Explore various banner ad sizes">Explore various banner ad sizes</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📺</div>
+                    <h3 data-ko="전면 광고" data-en="Interstitial Ads">Interstitial Ads</h3>
+                    <p data-ko="풀스크린 전면 광고를 체험해보세요" data-en="Experience full-screen interstitial ads">Experience full-screen interstitial ads</p>
+                </div>
+
+                <!-- In-article Ad (between features) -->
+                <div class="ad-in-article" style="grid-column: 1 / -1;">
+                    <ins class="adsbygoogle"
+                         style="display:block; text-align:center;"
+                         data-ad-layout="in-article"
+                         data-ad-format="fluid"
+                         data-ad-client="ca-pub-8143178103770527"
+                         data-ad-slot="2233445566"></ins>
+                    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎁</div>
+                    <h3 data-ko="리워드 광고" data-en="Rewarded Ads">Rewarded Ads</h3>
+                    <p data-ko="보상형 동영상 광고를 시청하세요" data-en="Watch rewarded video ads">Watch rewarded video ads</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📸</div>
+                    <h3 data-ko="스크린샷 저장" data-en="Save Screenshots">Save Screenshots</h3>
+                    <p data-ko="광고를 갤러리에 저장하세요" data-en="Save ads to your gallery">Save ads to your gallery</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ad Banner Middle -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="0987654321"
+                 data-ad-format="rectangle"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <!-- Support -->
+        <section class="support">
+            <h2 data-ko="고객 지원" data-en="Support">Support</h2>
+            <p data-ko="문의사항이 있으시면 언제든지 연락해주세요." data-en="Feel free to contact us if you have any questions.">Feel free to contact us if you have any questions.</p>
+            <a href="mailto:soen234@gmail.com?subject=[TAT] Support" class="support-email">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                soen234@gmail.com
+            </a>
+        </section>
+
+        <!-- Multiplex Ad (Grid-style recommendations) -->
+        <div class="ad-multiplex">
+            <div class="ad-label">Recommended for you</div>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-format="autorelaxed"
+                 data-ad-client="ca-pub-8143178103770527"
+                 data-ad-slot="3344556677"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2025 TAT (Today Ad Trend). All rights reserved.</p>
+            <div class="footer-links">
+                <a href="index.html" data-ko="홈" data-en="Home">Home</a>
+                <a href="guide.html" data-ko="가이드" data-en="Guide">Guide</a>
+                <a href="blog.html" data-ko="블로그" data-en="Blog">Blog</a>
+                <a href="https://brave-lifter-325.notion.site/Privacy-Policy-for-TAT-Today-Ad-Trend-2d8662e222b880f4be19c5d43d33de85" data-ko="개인정보처리방침" data-en="Privacy Policy">Privacy Policy</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Anchor Ad (Sticky Bottom) -->
+    <div class="ad-anchor" id="anchorAd">
+        <button class="close-btn" onclick="closeAnchorAd()" aria-label="Close ad">×</button>
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:320px;height:50px"
+             data-ad-client="ca-pub-8143178103770527"
+             data-ad-slot="4455667788"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    <script>
+        function setLang(lang) {
+            document.querySelectorAll('[data-ko]').forEach(el => {
+                el.textContent = el.getAttribute(`data-${lang}`);
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(lang === 'ko' ? '한국어' : 'English'));
+            });
+        }
+        // Default to English
+        setLang('en');
+
+        // Anchor Ad close function
+        function closeAnchorAd() {
+            document.getElementById('anchorAd').style.display = 'none';
+            document.body.style.paddingBottom = '0';
+        }
+
+        // Show anchor ad after 3 seconds scroll
+        let anchorShown = false;
+        window.addEventListener('scroll', function() {
+            if (!anchorShown && window.scrollY > 300) {
+                document.getElementById('anchorAd').style.display = 'block';
+                anchorShown = true;
+            }
+        });
+        // Initially hide anchor ad
+        document.getElementById('anchorAd').style.display = 'none';
+        document.body.style.paddingBottom = '0';
+    </script>
+</body>
+</html>
