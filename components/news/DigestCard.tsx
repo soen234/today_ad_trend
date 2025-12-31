@@ -17,7 +17,7 @@ export function DigestCard({ digest }: DigestCardProps) {
     });
   };
 
-  const summary = digest.summary_ko || digest.summary;
+  const summary = digest.summary;
 
   return (
     <View className="bg-blue-600 rounded-2xl p-4 mb-4 overflow-hidden">

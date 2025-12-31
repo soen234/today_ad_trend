@@ -66,13 +66,13 @@ export function NewsCard({ news }: NewsCardProps) {
 
         {/* Title */}
         <Text className="text-base font-semibold text-gray-900 dark:text-white mb-2" numberOfLines={2}>
-          {news.title_ko || news.title}
+          {news.title}
         </Text>
 
         {/* Summary */}
-        {(news.summary_ko || news.summary) && (
+        {news.summary && (
           <Text className="text-sm text-gray-600 dark:text-gray-400 mb-3" numberOfLines={3}>
-            {news.summary_ko || news.summary}
+            {news.summary}
           </Text>
         )}
 
