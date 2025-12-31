@@ -56,7 +56,7 @@ export function CategoryTrendCard({
         <View className="flex-row items-center justify-between">
           <View>
             <Text className="text-white text-lg font-semibold">{category}</Text>
-            <Text className="text-white/80 text-xs">{ads.length}개의 인기 광고</Text>
+            <Text className="text-white/80 text-xs">{ads.length} trending ads</Text>
           </View>
           <View className="w-10 h-10 bg-white/20 rounded-full items-center justify-center">
             <TrendingUp size={20} color="#fff" />

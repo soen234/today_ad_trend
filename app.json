@@ -1,30 +1,43 @@
 {
   "expo": {
-    "name": "ad-trend-temp",
+    "name": "TAT",
     "slug": "ad-trend-temp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "adtrendtemp",
+    "scheme": "tat",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0a1929"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.elehedge.adtrendtemp"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.elehedge.tat",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSUserTrackingUsageDescription": "This app uses tracking to show you personalized ads that match your interests."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0a1929"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.elehedge.adtrendtemp"
+      "package": "com.elehedge.tat",
+      "permissions": [
+        "com.google.android.gms.permission.AD_ID",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -32,7 +45,22 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-8143178103770527~2055004965",
+          "iosAppId": "ca-app-pub-8143178103770527~2055004965"
+        }
+      ],
+      "expo-tracking-transparency",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow TAT to save ad screenshots to your photo library.",
+          "savePhotosPermission": "Allow TAT to save ad screenshots to your photo library."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

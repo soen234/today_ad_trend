@@ -32,7 +32,7 @@ export function AdCard({ ad, onPress }: AdCardProps) {
         {ad.trending && (
           <View className="absolute top-3 right-3 bg-red-500 px-2.5 py-1 rounded-full flex-row items-center">
             <TrendingUp size={12} color="#fff" />
-            <Text className="text-white text-xs font-medium ml-1">트렌딩</Text>
+            <Text className="text-white text-xs font-medium ml-1">Trending</Text>
           </View>
         )}
 

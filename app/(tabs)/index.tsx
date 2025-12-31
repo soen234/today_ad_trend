@@ -1,173 +1,202 @@
-import { useState, useMemo } from 'react';
-import { View, Text, TextInput, ScrollView, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Search, Sparkles } from 'lucide-react-native';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  FlatList,
+  Pressable,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TrendSection } from '@/components/home';
-import { AdCard } from '@/components/ads';
-import { Badge } from '@/components/ui/Badge';
-import { MOCK_ADS } from '@/lib/mock';
-import { Ad } from '@/types';
+import { Newspaper, ChevronLeft, ChevronRight, Calendar } from 'lucide-react-native';
+import { useNews, useNewsDates, useDigestByDate } from '@/hooks/useNews';
+import { NewsCard, DigestCard } from '@/components/news';
+import { NewsCategory } from '@/types';
 
-const FILTER_CATEGORIES = ['전체', '패션', '테크', '뷰티', '음식', '게임', '금융'];
+const CATEGORIES: { key: NewsCategory; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'adtech', label: 'AdTech' },
+  { key: 'martech', label: 'MarTech' },
+  { key: 'general', label: 'General' },
+];
 
-const CATEGORY_MAP: Record<string, string> = {
-  '패션': 'fashion',
-  '테크': 'tech',
-  '뷰티': 'beauty',
-  '음식': 'food',
-  '게임': 'games',
-  '금융': 'finance',
-};
-
-export default function HomeScreen() {
-  const router = useRouter();
+export default function NewsScreen() {
   const insets = useSafeAreaInsets();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('전체');
+  const [selectedCategory, setSelectedCategory] = useState<NewsCategory>('all');
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  // 필터링된 광고
-  const filteredAds = useMemo(() => {
-    let ads = [...MOCK_ADS];
+  // Fetch available dates
+  const { dates, loading: datesLoading } = useNewsDates();
 
-    // 카테고리 필터
-    if (selectedCategory !== '전체') {
-      const categoryId = CATEGORY_MAP[selectedCategory];
-      if (categoryId) {
-        ads = ads.filter((ad) => ad.category_id === categoryId);
-      }
+  // Set initial date when dates are loaded
+  useEffect(() => {
+    if (dates.length > 0 && !selectedDate) {
+      setSelectedDate(dates[0]);
     }
+  }, [dates, selectedDate]);
 
-    // 검색 필터
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      ads = ads.filter(
-        (ad) =>
-          ad.advertiser_name.toLowerCase().includes(query) ||
-          ad.category_id.toLowerCase().includes(query)
-      );
+  // Fetch news with filters
+  const { news, loading, refreshing, refresh } = useNews({
+    category: selectedCategory,
+    date: selectedDate || undefined,
+  });
+
+  // Fetch digest for selected date
+  const { digest, loading: digestLoading } = useDigestByDate(selectedDate);
+
+  // Navigate between dates
+  const currentDateIndex = useMemo(() => {
+    if (!selectedDate || dates.length === 0) return -1;
+    return dates.findIndex((d) => d === selectedDate);
+  }, [dates, selectedDate]);
+
+  const canGoPrevious = currentDateIndex >= 0 && currentDateIndex < dates.length - 1;
+  const canGoNext = currentDateIndex > 0;
+
+  const goToPreviousDate = useCallback(() => {
+    if (!selectedDate || dates.length === 0) return;
+    const index = dates.findIndex((d) => d === selectedDate);
+    if (index >= 0 && index < dates.length - 1) {
+      setSelectedDate(dates[index + 1]);
     }
+  }, [dates, selectedDate]);
 
-    return ads;
-  }, [selectedCategory, searchQuery]);
+  const goToNextDate = useCallback(() => {
+    if (!selectedDate || dates.length === 0) return;
+    const index = dates.findIndex((d) => d === selectedDate);
+    if (index > 0) {
+      setSelectedDate(dates[index - 1]);
+    }
+  }, [dates, selectedDate]);
 
-  const handleAdPress = (ad: Ad) => {
-    router.push(`/ad/${ad.id}`);
-  };
-
-  const getCategoryCount = (category: string) => {
-    if (category === '전체') return MOCK_ADS.length;
-    const categoryId = CATEGORY_MAP[category];
-    return MOCK_ADS.filter((ad) => ad.category_id === categoryId).length;
+  const formatDateShort = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
   return (
     <View className="flex-1 bg-gray-50 dark:bg-gray-900" style={{ paddingTop: insets.top }}>
       {/* Header */}
-      <View className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 pb-4">
-        {/* Logo & Title */}
-        <View className="flex-row items-center gap-3 mb-4">
-          <View className="w-10 h-10 bg-blue-500 rounded-xl items-center justify-center">
-            <Sparkles size={24} color="white" />
+      <View className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4">
+        <View className="flex-row items-center gap-3">
+          <View className="w-10 h-10 bg-emerald-500 rounded-xl items-center justify-center">
+            <Newspaper size={24} color="white" />
           </View>
           <View>
-            <Text className="text-xl font-bold text-gray-900 dark:text-white">
-              애드 트렌드
-            </Text>
+            <Text className="text-xl font-bold text-gray-900 dark:text-white">Ad News</Text>
             <Text className="text-xs text-gray-500 dark:text-gray-400">
-              광고 트렌드를 한눈에 확인하세요
+              Daily advertising industry updates
             </Text>
           </View>
-        </View>
-
-        {/* Search Bar */}
-        <View className="flex-row items-center bg-gray-100 dark:bg-gray-700 rounded-xl px-4 py-3">
-          <Search size={20} color="#9CA3AF" />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="브랜드 또는 광고명으로 검색..."
-            placeholderTextColor="#9CA3AF"
-            className="flex-1 ml-3 text-base text-gray-900 dark:text-white"
-          />
         </View>
       </View>
 
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
-      >
-        {/* Trend Section */}
-        <View className="mt-6">
-          <TrendSection onAdPress={handleAdPress} />
-        </View>
-
-        {/* Category Filter */}
-        <View className="px-4 mt-4">
-          <Text className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-            카테고리
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8 }}
+      {/* Date Navigator */}
+      <View className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        <View className="flex-row items-center justify-between">
+          <Pressable
+            onPress={goToPreviousDate}
+            disabled={!canGoPrevious}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            className="p-2"
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.5 : !canGoPrevious ? 0.3 : 1,
+            })}
           >
-            {FILTER_CATEGORIES.map((category) => (
-              <Pressable key={category} onPress={() => setSelectedCategory(category)}>
-                <Badge
-                  variant={selectedCategory === category ? 'default' : 'outline'}
-                  className={selectedCategory === category ? '' : 'bg-white dark:bg-gray-800'}
-                >
-                  <Text
-                    className={`text-sm ${
-                      selectedCategory === category
-                        ? 'text-white dark:text-gray-900'
-                        : 'text-gray-900 dark:text-white'
-                    }`}
-                  >
-                    {category}
-                    <Text className="opacity-70"> {getCategoryCount(category)}</Text>
-                  </Text>
-                </Badge>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
+            <ChevronLeft size={24} color={canGoPrevious ? '#10B981' : '#9CA3AF'} />
+          </Pressable>
 
-        {/* Results count */}
-        <View className="px-4 mt-4 mb-2">
-          <Text className="text-sm text-gray-600 dark:text-gray-400">
-            총 <Text className="font-semibold text-gray-900 dark:text-white">{filteredAds.length}개</Text>의 광고
-          </Text>
-        </View>
-
-        {/* Ad Grid */}
-        <View className="px-2">
-          <View className="flex-row flex-wrap">
-            {filteredAds.map((ad) => (
-              <View key={ad.id} className="w-1/2 p-2">
-                <AdCard ad={ad} onPress={() => handleAdPress(ad)} />
-              </View>
-            ))}
+          <View className="flex-row items-center">
+            <Calendar size={18} color="#10B981" />
+            <Text className="text-base font-semibold text-gray-900 dark:text-white ml-2">
+              {selectedDate ? formatDateShort(selectedDate) : 'Loading...'}
+            </Text>
           </View>
-        </View>
 
-        {/* Empty State */}
-        {filteredAds.length === 0 && (
-          <View className="items-center justify-center py-16">
-            <View className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full items-center justify-center mb-4">
-              <Search size={32} color="#9CA3AF" />
+          <Pressable
+            onPress={goToNextDate}
+            disabled={!canGoNext}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            className="p-2"
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.5 : !canGoNext ? 0.3 : 1,
+            })}
+          >
+            <ChevronRight size={24} color={canGoNext ? '#10B981' : '#9CA3AF'} />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Category Filter */}
+      <View className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 8 }}
+        >
+          {CATEGORIES.map((cat) => (
+            <Pressable
+              key={cat.key}
+              onPress={() => setSelectedCategory(cat.key)}
+              className={`px-4 py-2 rounded-full ${
+                selectedCategory === cat.key
+                  ? 'bg-emerald-500'
+                  : 'bg-gray-100 dark:bg-gray-700'
+              }`}
+            >
+              <Text
+                className={`text-sm font-medium ${
+                  selectedCategory === cat.key
+                    ? 'text-white'
+                    : 'text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                {cat.label}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Content */}
+      {loading && !refreshing ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#10B981" />
+          <Text className="text-gray-500 dark:text-gray-400 mt-2">Loading news...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={news}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <NewsCard news={item} />}
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: insets.bottom + 20,
+          }}
+          ListHeaderComponent={
+            // Only show AI Summary in "All" category
+            selectedCategory === 'all' && digest && !digestLoading ? (
+              <DigestCard digest={digest} />
+            ) : null
+          }
+          ListEmptyComponent={
+            <View className="items-center justify-center py-12">
+              <Newspaper size={48} color="#9CA3AF" />
+              <Text className="text-gray-500 dark:text-gray-400 mt-4 text-center">
+                No news found for this date
+              </Text>
             </View>
-            <Text className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              검색 결과가 없습니다
-            </Text>
-            <Text className="text-sm text-gray-500 dark:text-gray-400">
-              다른 검색어나 필터를 시도해보세요
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor="#10B981" />
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }

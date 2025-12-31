@@ -1,9 +1,9 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Home, LayoutGrid, FolderOpen, Bookmark, Settings } from 'lucide-react-native';
+import { Newspaper, LayoutGrid, Maximize, Gift, Settings } from 'lucide-react-native';
 
-const ACTIVE_COLOR = '#3B82F6';
+const ACTIVE_COLOR = '#10B981'; // emerald-500
 const INACTIVE_COLOR = '#9CA3AF';
 
 export default function TabLayout() {
@@ -25,29 +25,29 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+          title: 'News',
+          tabBarIcon: ({ color, size }) => <Newspaper color={color} size={size} />,
         }}
       />
       <Tabs.Screen
-        name="formats"
+        name="banner"
         options={{
-          title: 'Formats',
+          title: 'Banner',
           tabBarIcon: ({ color, size }) => <LayoutGrid color={color} size={size} />,
         }}
       />
       <Tabs.Screen
-        name="categories"
+        name="interstitial"
         options={{
-          title: 'Categories',
-          tabBarIcon: ({ color, size }) => <FolderOpen color={color} size={size} />,
+          title: 'Interstitial',
+          tabBarIcon: ({ color, size }) => <Maximize color={color} size={size} />,
         }}
       />
       <Tabs.Screen
-        name="saved"
+        name="rewarded"
         options={{
-          title: 'Saved',
-          tabBarIcon: ({ color, size }) => <Bookmark color={color} size={size} />,
+          title: 'Rewarded',
+          tabBarIcon: ({ color, size }) => <Gift color={color} size={size} />,
         }}
       />
       <Tabs.Screen

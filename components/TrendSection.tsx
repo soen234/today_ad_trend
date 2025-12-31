@@ -9,10 +9,10 @@ interface TrendSectionProps {
 }
 
 const gradientColorsMap: Record<string, [string, string]> = {
-  '패션': ['#8B5CF6', '#7C3AED'],
-  '테크': ['#3B82F6', '#2563EB'],
-  '뷰티': ['#EC4899', '#DB2777'],
-  '식품': ['#22C55E', '#16A34A'],
+  'Fashion': ['#8B5CF6', '#7C3AED'],
+  'Tech': ['#3B82F6', '#2563EB'],
+  'Beauty': ['#EC4899', '#DB2777'],
+  'Food': ['#22C55E', '#16A34A'],
 };
 
 export function TrendSection({ onAdPress }: TrendSectionProps) {
@@ -23,11 +23,11 @@ export function TrendSection({ onAdPress }: TrendSectionProps) {
         <View className="flex-row items-center gap-2 mb-1">
           <Zap size={20} color="#EAB308" fill="#EAB308" />
           <Text className="text-xl font-semibold text-gray-900 dark:text-white">
-            이번 주 트렌드
+            This Week's Trends
           </Text>
         </View>
         <Text className="text-sm text-gray-500 dark:text-gray-400">
-          가장 많은 주목을 받고 있는 광고 카테고리를 확인하세요
+          Check out the most popular ad categories
         </Text>
       </View>
 
@@ -60,18 +60,18 @@ export function TrendSection({ onAdPress }: TrendSectionProps) {
           </View>
           <View className="flex-1">
             <Text className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-              주간 하이라이트
+              Weekly Highlight
             </Text>
             <Text className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-              이번 주 가장 높은 조회수를 기록한 광고는{' '}
-              <Text className="font-semibold">테크 카테고리</Text>의 새로운 스마트폰 광고입니다.
+              The most viewed ad this week is a new smartphone ad from the{' '}
+              <Text className="font-semibold">Tech category</Text>.
             </Text>
             <View className="flex-row gap-4">
               <Text className="text-sm text-gray-500 dark:text-gray-400">
-                총 조회수: <Text className="font-medium text-gray-900 dark:text-white">2.4M</Text>
+                Total Views: <Text className="font-medium text-gray-900 dark:text-white">2.4M</Text>
               </Text>
               <Text className="text-sm text-gray-500 dark:text-gray-400">
-                평균 참여율: <Text className="font-medium text-gray-900 dark:text-white">8.5%</Text>
+                Avg. Engagement: <Text className="font-medium text-gray-900 dark:text-white">8.5%</Text>
               </Text>
             </View>
           </View>

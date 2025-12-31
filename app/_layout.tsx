@@ -4,11 +4,23 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import 'react-native-reanimated';
 
 import '../global.css';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { QueryProvider } from '@/providers/QueryProvider';
+import { AuthProvider } from '@/providers/AuthProvider';
+
+// Conditionally import tracking transparency
+let requestTrackingPermissionsAsync: (() => Promise<{ status: string }>) | undefined;
+try {
+  const TrackingTransparency = require('expo-tracking-transparency');
+  requestTrackingPermissionsAsync = TrackingTransparency.requestTrackingPermissionsAsync;
+} catch {
+  // Module not available in development
+}
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -40,6 +52,18 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  // Request ATT permission on iOS
+  useEffect(() => {
+    const requestTracking = async () => {
+      if (Platform.OS === 'ios' && requestTrackingPermissionsAsync) {
+        await requestTrackingPermissionsAsync();
+      }
+    };
+    if (loaded) {
+      requestTracking();
+    }
+  }, [loaded]);
+
   if (!loaded) {
     return null;
   }
@@ -51,11 +75,16 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <QueryProvider>
+      <AuthProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          </Stack>
+        </ThemeProvider>
+      </AuthProvider>
+    </QueryProvider>
   );
 }

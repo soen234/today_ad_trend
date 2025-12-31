@@ -48,3 +48,33 @@ export interface SavedAd {
   collection_id: string | null;
   saved_at: string;
 }
+
+// News Types
+export type NewsCategory = 'all' | 'adtech' | 'martech' | 'general';
+
+export interface AdNews {
+  id: string;
+  title: string;
+  title_ko: string | null;
+  summary: string | null;
+  summary_ko: string | null;
+  category: string;
+  source: string | null;
+  source_url: string | null;
+  image_url: string | null;
+  published_at: string | null;
+  created_at: string;
+  is_featured: boolean;
+}
+
+export interface AdNewsDigest {
+  id: string;
+  digest_date: string;
+  summary: string | null;
+  summary_ko: string | null;
+  total_news_count: number;
+  adtech_count: number;
+  martech_count: number;
+  general_count: number;
+  created_at: string;
+}
