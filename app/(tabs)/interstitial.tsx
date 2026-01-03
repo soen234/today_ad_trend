@@ -7,17 +7,24 @@ import {
   AdEventType,
   TestIds,
 } from 'react-native-google-mobile-ads';
-
-const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-8143178103770527/8770981770';
+import { AD_UNIT_IDS, TEST_AD_UNIT_IDS } from '@/lib/admob';
 
 export default function InterstitialScreen() {
   const insets = useSafeAreaInsets();
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
   const interstitialRef = useRef<InterstitialAd | null>(null);
 
-  useEffect(() => {
-    // Create ad instance inside useEffect to avoid early initialization
+  const getAdUnitId = (fallback: boolean) => {
+    if (fallback) {
+      return TEST_AD_UNIT_IDS.interstitial || TestIds.INTERSTITIAL;
+    }
+    return AD_UNIT_IDS.interstitial || TestIds.INTERSTITIAL;
+  };
+
+  const createAndLoadAd = (fallback: boolean) => {
+    const adUnitId = getAdUnitId(fallback);
     const interstitial = InterstitialAd.createForAdRequest(adUnitId, {
       requestNonPersonalizedAdsOnly: true,
     });
@@ -35,18 +42,29 @@ export default function InterstitialScreen() {
     });
 
     const unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, (error) => {
-      setLoading(false);
       console.error('Interstitial ad error:', error);
+      if (!fallback) {
+        // Try fallback to test ad
+        setUseFallback(true);
+        createAndLoadAd(true);
+      } else {
+        setLoading(false);
+      }
     });
 
-    // Initial load
-    loadAd();
+    setLoading(true);
+    interstitial.load();
 
     return () => {
       unsubscribeLoaded();
       unsubscribeClosed();
       unsubscribeError();
     };
+  };
+
+  useEffect(() => {
+    const cleanup = createAndLoadAd(useFallback);
+    return cleanup;
   }, []);
 
   const loadAd = () => {

@@ -12,7 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Newspaper, ChevronLeft, ChevronRight, Calendar } from 'lucide-react-native';
 import { useNews, useNewsDates, useDigestByDate } from '@/hooks/useNews';
 import { NewsCard, DigestCard } from '@/components/news';
-import { NewsCategory } from '@/types';
+import { InFeedAd } from '@/components/ads/InFeedAd';
+import { NewsCategory, FeedItem } from '@/types';
+import { createMixedFeed, getFeedItemKey } from '@/lib/feedUtils';
 
 const CATEGORIES: { key: NewsCategory; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -44,6 +46,36 @@ export default function NewsScreen() {
 
   // Fetch digest for selected date
   const { digest, loading: digestLoading } = useDigestByDate(selectedDate);
+
+  // Calculate news counts from actual news data
+  const newsCounts = useMemo(() => {
+    if (!news || news.length === 0) return undefined;
+
+    return {
+      adtech: news.filter((n) => n.category === 'adtech').length,
+      martech: news.filter((n) => n.category === 'martech').length,
+      general: news.filter((n) => n.category === 'general').length,
+      total: news.length,
+    };
+  }, [news]);
+
+  // Create mixed feed with ads
+  const mixedFeed = useMemo(() => {
+    return createMixedFeed({
+      news,
+      adInterval: 4,
+      minNewsBeforeFirstAd: 3,
+      maxAds: 5,
+    });
+  }, [news]);
+
+  // Render function for mixed feed items
+  const renderFeedItem = useCallback(({ item }: { item: FeedItem }) => {
+    if (item.type === 'ad') {
+      return <InFeedAd />;
+    }
+    return <NewsCard news={item.data} />;
+  }, []);
 
   // Navigate between dates
   const currentDateIndex = useMemo(() => {
@@ -170,9 +202,9 @@ export default function NewsScreen() {
         </View>
       ) : (
         <FlatList
-          data={news}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <NewsCard news={item} />}
+          data={mixedFeed}
+          keyExtractor={getFeedItemKey}
+          renderItem={renderFeedItem}
           contentContainerStyle={{
             padding: 16,
             paddingBottom: insets.bottom + 20,
@@ -180,7 +212,7 @@ export default function NewsScreen() {
           ListHeaderComponent={
             // Only show AI Summary in "All" category
             selectedCategory === 'all' && digest && !digestLoading ? (
-              <DigestCard digest={digest} />
+              <DigestCard digest={digest} newsCounts={newsCounts} />
             ) : null
           }
           ListEmptyComponent={
@@ -195,6 +227,8 @@ export default function NewsScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor="#10B981" />
           }
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
         />
       )}
     </View>

@@ -9,6 +9,7 @@ import {
   ChevronRight,
   LogOut,
   Mail,
+  Trash2,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -82,7 +83,7 @@ function Divider() {
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, signOut, isLoading } = useAuthStore();
+  const { user, signOut, deleteAccount, isLoading } = useAuthStore();
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
@@ -95,6 +96,42 @@ export default function SettingsScreen() {
         },
       },
     ]);
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            // Second confirmation for safety
+            Alert.alert(
+              'Confirm Deletion',
+              'This will permanently delete your account. Are you absolutely sure?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Yes, Delete My Account',
+                  style: 'destructive',
+                  onPress: async () => {
+                    const { error } = await deleteAccount();
+                    if (error) {
+                      Alert.alert('Error', error.message || 'Failed to delete account. Please try again.');
+                    } else {
+                      Alert.alert('Account Deleted', 'Your account has been successfully deleted.');
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -141,6 +178,18 @@ export default function SettingsScreen() {
                   <LogOut size={20} color="#EF4444" />
                 </View>
                 <Text className="text-base text-red-500">Logout</Text>
+              </Pressable>
+              <Divider />
+              <Pressable
+                onPress={handleDeleteAccount}
+                disabled={isLoading}
+                className="flex-row items-center py-4 px-4"
+                style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+              >
+                <View className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/20 items-center justify-center mr-3">
+                  <Trash2 size={20} color="#EF4444" />
+                </View>
+                <Text className="text-base text-red-500">Delete Account</Text>
               </Pressable>
             </View>
           ) : (

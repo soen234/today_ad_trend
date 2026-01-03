@@ -2,11 +2,19 @@ import { View, Text } from 'react-native';
 import { Sparkles, TrendingUp, Zap, Globe, Bot } from 'lucide-react-native';
 import { AdNewsDigest } from '@/types';
 
-interface DigestCardProps {
-  digest: AdNewsDigest;
+interface NewsCounts {
+  adtech: number;
+  martech: number;
+  general: number;
+  total: number;
 }
 
-export function DigestCard({ digest }: DigestCardProps) {
+interface DigestCardProps {
+  digest: AdNewsDigest;
+  newsCounts?: NewsCounts;
+}
+
+export function DigestCard({ digest, newsCounts }: DigestCardProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', {
@@ -18,6 +26,12 @@ export function DigestCard({ digest }: DigestCardProps) {
   };
 
   const summary = digest.summary;
+
+  // Use newsCounts if provided, otherwise fall back to digest values
+  const adtechCount = newsCounts?.adtech ?? digest.adtech_count ?? 0;
+  const martechCount = newsCounts?.martech ?? digest.martech_count ?? 0;
+  const generalCount = newsCounts?.general ?? digest.general_count ?? 0;
+  const totalCount = newsCounts?.total ?? digest.total_news_count ?? 0;
 
   return (
     <View className="bg-blue-600 rounded-2xl p-4 mb-4 overflow-hidden">
@@ -34,7 +48,7 @@ export function DigestCard({ digest }: DigestCardProps) {
         </View>
         <View className="bg-white/20 px-2 py-1 rounded-full flex-row items-center">
           <Sparkles size={12} color="white" />
-          <Text className="text-white/90 text-xs ml-1 font-medium">GPT-4</Text>
+          <Text className="text-white/90 text-xs ml-1 font-medium">AI</Text>
         </View>
       </View>
 
@@ -52,7 +66,7 @@ export function DigestCard({ digest }: DigestCardProps) {
         <View className="items-center flex-1">
           <View className="flex-row items-center">
             <TrendingUp size={14} color="white" />
-            <Text className="text-white font-bold text-lg ml-1">{digest.adtech_count || 0}</Text>
+            <Text className="text-white font-bold text-lg ml-1">{adtechCount}</Text>
           </View>
           <Text className="text-white/60 text-xs">AdTech</Text>
         </View>
@@ -60,7 +74,7 @@ export function DigestCard({ digest }: DigestCardProps) {
         <View className="items-center flex-1">
           <View className="flex-row items-center">
             <Zap size={14} color="white" />
-            <Text className="text-white font-bold text-lg ml-1">{digest.martech_count || 0}</Text>
+            <Text className="text-white font-bold text-lg ml-1">{martechCount}</Text>
           </View>
           <Text className="text-white/60 text-xs">MarTech</Text>
         </View>
@@ -68,13 +82,13 @@ export function DigestCard({ digest }: DigestCardProps) {
         <View className="items-center flex-1">
           <View className="flex-row items-center">
             <Globe size={14} color="white" />
-            <Text className="text-white font-bold text-lg ml-1">{digest.general_count || 0}</Text>
+            <Text className="text-white font-bold text-lg ml-1">{generalCount}</Text>
           </View>
           <Text className="text-white/60 text-xs">General</Text>
         </View>
 
         <View className="items-center flex-1">
-          <Text className="text-white font-bold text-lg">{digest.total_news_count || 0}</Text>
+          <Text className="text-white font-bold text-lg">{totalCount}</Text>
           <Text className="text-white/60 text-xs">Total</Text>
         </View>
       </View>

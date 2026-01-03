@@ -8,18 +8,25 @@ import {
   AdEventType,
   TestIds,
 } from 'react-native-google-mobile-ads';
-
-const adUnitId = __DEV__ ? TestIds.REWARDED : 'ca-app-pub-8143178103770527/2925233506';
+import { AD_UNIT_IDS, TEST_AD_UNIT_IDS } from '@/lib/admob';
 
 export default function RewardedScreen() {
   const insets = useSafeAreaInsets();
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [earnedRewards, setEarnedRewards] = useState(0);
+  const [useFallback, setUseFallback] = useState(false);
   const rewardedRef = useRef<RewardedAd | null>(null);
 
-  useEffect(() => {
-    // Create ad instance inside useEffect to avoid early initialization
+  const getAdUnitId = (fallback: boolean) => {
+    if (fallback) {
+      return TEST_AD_UNIT_IDS.rewarded || TestIds.REWARDED;
+    }
+    return AD_UNIT_IDS.rewarded || TestIds.REWARDED;
+  };
+
+  const createAndLoadAd = (fallback: boolean) => {
+    const adUnitId = getAdUnitId(fallback);
     const rewarded = RewardedAd.createForAdRequest(adUnitId, {
       requestNonPersonalizedAdsOnly: true,
     });
@@ -45,12 +52,18 @@ export default function RewardedScreen() {
     });
 
     const unsubscribeError = rewarded.addAdEventListener(AdEventType.ERROR, (error) => {
-      setLoading(false);
       console.error('Rewarded ad error:', error);
+      if (!fallback) {
+        // Try fallback to test ad
+        setUseFallback(true);
+        createAndLoadAd(true);
+      } else {
+        setLoading(false);
+      }
     });
 
-    // Initial load
-    loadAd();
+    setLoading(true);
+    rewarded.load();
 
     return () => {
       unsubscribeLoaded();
@@ -58,6 +71,11 @@ export default function RewardedScreen() {
       unsubscribeClosed();
       unsubscribeError();
     };
+  };
+
+  useEffect(() => {
+    const cleanup = createAndLoadAd(useFallback);
+    return cleanup;
   }, []);
 
   const loadAd = () => {

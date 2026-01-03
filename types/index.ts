@@ -78,3 +78,18 @@ export interface AdNewsDigest {
   general_count: number;
   created_at: string;
 }
+
+// Feed Item Types for mixed news + ads list
+export type FeedItemType = 'news' | 'ad';
+
+export interface NewsFeedItem {
+  type: 'news';
+  data: AdNews;
+}
+
+export interface AdFeedItem {
+  type: 'ad';
+  id: string;
+}
+
+export type FeedItem = NewsFeedItem | AdFeedItem;
