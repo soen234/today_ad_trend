@@ -1,236 +1,137 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  FlatList,
-  Pressable,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Newspaper, ChevronLeft, ChevronRight, Calendar } from 'lucide-react-native';
-import { useNews, useNewsDates, useDigestByDate } from '@/hooks/useNews';
-import { NewsCard, DigestCard } from '@/components/news';
-import { InFeedAd } from '@/components/ads/InFeedAd';
-import { NewsCategory, FeedItem } from '@/types';
-import { createMixedFeed, getFeedItemKey } from '@/lib/feedUtils';
+import * as Haptics from 'expo-haptics';
+import { Flame } from 'lucide-react-native';
+import { BrandMark } from '@/components/BrandMark';
+import { BriefCard } from '@/components/brief/BriefCard';
+import { DoneCard } from '@/components/brief/DoneCard';
+import { MessageState, OfflineState, SkeletonList } from '@/components/StateViews';
+import { useEdition } from '@/hooks/useBriefData';
+import { COLORS, roleMeta } from '@/lib/config';
+import { formatEditionDate, formatTime, localDateKey, relativeTime } from '@/lib/date';
+import { openUrl } from '@/lib/open';
+import { currentStreak } from '@/lib/streak';
+import { usePrefs } from '@/stores/prefsStore';
+import type { Item } from '@/types';
 
-const CATEGORIES: { key: NewsCategory; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'adtech', label: 'AdTech' },
-  { key: 'martech', label: 'MarTech' },
-  { key: 'general', label: 'General' },
-];
+const EMPTY: string[] = [];
 
-export default function NewsScreen() {
+export default function TodayScreen() {
   const insets = useSafeAreaInsets();
-  const [selectedCategory, setSelectedCategory] = useState<NewsCategory>('all');
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const router = useRouter();
+  const role = usePrefs((s) => s.role);
+  const streak = usePrefs((s) => s.streak);
+  const briefTime = usePrefs((s) => s.briefTime);
+  const remindersEnabled = usePrefs((s) => s.remindersEnabled);
+  const markRead = usePrefs((s) => s.markRead);
+  const { latest, edition, hasEdition } = useEdition(role);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch available dates
-  const { dates, loading: datesLoading } = useNewsDates();
+  const data = edition.data;
+  const readIds = usePrefs((s) => (data ? s.readByEdition[data.date] ?? EMPTY : EMPTY));
+  const readCount = useMemo(() => (data ? data.items.filter((i) => readIds.includes(i.id)).length : 0), [data, readIds]);
+  const total = data?.items.length ?? 0;
+  const done = total > 0 && readCount === total;
+  const streakCount = currentStreak(streak);
 
-  // Set initial date when dates are loaded
-  useEffect(() => {
-    if (dates.length > 0 && !selectedDate) {
-      setSelectedDate(dates[0]);
-    }
-  }, [dates, selectedDate]);
+  const onOpen = useCallback(
+    (item: Item) => {
+      if (data) markRead(data.date, item.id);
+      openUrl(item.url).catch(() => undefined);
+    },
+    [data, markRead]
+  );
 
-  // Fetch news with filters
-  const { news, loading, refreshing, refresh } = useNews({
-    category: selectedCategory,
-    date: selectedDate || undefined,
-  });
-
-  // Fetch digest for selected date
-  const { digest, loading: digestLoading } = useDigestByDate(selectedDate);
-
-  // Calculate news counts from actual news data
-  const newsCounts = useMemo(() => {
-    if (!news || news.length === 0) return undefined;
-
-    return {
-      adtech: news.filter((n) => n.category === 'adtech').length,
-      martech: news.filter((n) => n.category === 'martech').length,
-      general: news.filter((n) => n.category === 'general').length,
-      total: news.length,
-    };
-  }, [news]);
-
-  // Create mixed feed with ads
-  const mixedFeed = useMemo(() => {
-    return createMixedFeed({
-      news,
-      adInterval: 4,
-      minNewsBeforeFirstAd: 3,
-      maxAds: 5,
-    });
-  }, [news]);
-
-  // Render function for mixed feed items
-  const renderFeedItem = useCallback(({ item }: { item: FeedItem }) => {
-    if (item.type === 'ad') {
-      return <InFeedAd />;
-    }
-    return <NewsCard news={item.data} />;
-  }, []);
-
-  // Navigate between dates
-  const currentDateIndex = useMemo(() => {
-    if (!selectedDate || dates.length === 0) return -1;
-    return dates.findIndex((d) => d === selectedDate);
-  }, [dates, selectedDate]);
-
-  const canGoPrevious = currentDateIndex >= 0 && currentDateIndex < dates.length - 1;
-  const canGoNext = currentDateIndex > 0;
-
-  const goToPreviousDate = useCallback(() => {
-    if (!selectedDate || dates.length === 0) return;
-    const index = dates.findIndex((d) => d === selectedDate);
-    if (index >= 0 && index < dates.length - 1) {
-      setSelectedDate(dates[index + 1]);
-    }
-  }, [dates, selectedDate]);
-
-  const goToNextDate = useCallback(() => {
-    if (!selectedDate || dates.length === 0) return;
-    const index = dates.findIndex((d) => d === selectedDate);
-    if (index > 0) {
-      setSelectedDate(dates[index - 1]);
-    }
-  }, [dates, selectedDate]);
-
-  const formatDateShort = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
+  const onRefresh = async () => {
+    setRefreshing(true);
+    Haptics.selectionAsync().catch(() => undefined);
+    await latest.refetch();
+    await edition.refetch();
+    setRefreshing(false);
   };
 
+  const loading = latest.isLoading || (hasEdition && edition.isLoading);
+  const failed = !data && (latest.isError || edition.isError);
+
   return (
-    <View className="flex-1 bg-gray-50 dark:bg-gray-900" style={{ paddingTop: insets.top }}>
-      {/* Header */}
-      <View className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4">
-        <View className="flex-row items-center gap-3">
-          <View className="w-10 h-10 bg-emerald-500 rounded-xl items-center justify-center">
-            <Newspaper size={24} color="white" />
-          </View>
-          <View>
-            <Text className="text-xl font-bold text-gray-900 dark:text-white">Ad News</Text>
-            <Text className="text-xs text-gray-500 dark:text-gray-400">
-              Daily advertising industry updates
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Date Navigator */}
-      <View className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-        <View className="flex-row items-center justify-between">
-          <Pressable
-            onPress={goToPreviousDate}
-            disabled={!canGoPrevious}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            className="p-2"
-            style={({ pressed }) => ({
-              opacity: pressed ? 0.5 : !canGoPrevious ? 0.3 : 1,
-            })}
-          >
-            <ChevronLeft size={24} color={canGoPrevious ? '#10B981' : '#9CA3AF'} />
-          </Pressable>
-
+    <View className="flex-1 bg-[#F5F7FA] dark:bg-ink-950" style={{ paddingTop: insets.top }}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 24 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.signal} />}
+      >
+        <View className="flex-row items-center justify-between mb-4">
           <View className="flex-row items-center">
-            <Calendar size={18} color="#10B981" />
-            <Text className="text-base font-semibold text-gray-900 dark:text-white ml-2">
-              {selectedDate ? formatDateShort(selectedDate) : 'Loading...'}
-            </Text>
-          </View>
-
-          <Pressable
-            onPress={goToNextDate}
-            disabled={!canGoNext}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            className="p-2"
-            style={({ pressed }) => ({
-              opacity: pressed ? 0.5 : !canGoNext ? 0.3 : 1,
-            })}
-          >
-            <ChevronRight size={24} color={canGoNext ? '#10B981' : '#9CA3AF'} />
-          </Pressable>
-        </View>
-      </View>
-
-      {/* Category Filter */}
-      <View className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8 }}
-        >
-          {CATEGORIES.map((cat) => (
-            <Pressable
-              key={cat.key}
-              onPress={() => setSelectedCategory(cat.key)}
-              className={`px-4 py-2 rounded-full ${
-                selectedCategory === cat.key
-                  ? 'bg-emerald-500'
-                  : 'bg-gray-100 dark:bg-gray-700'
-              }`}
-            >
-              <Text
-                className={`text-sm font-medium ${
-                  selectedCategory === cat.key
-                    ? 'text-white'
-                    : 'text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                {cat.label}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Content */}
-      {loading && !refreshing ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#10B981" />
-          <Text className="text-gray-500 dark:text-gray-400 mt-2">Loading news...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={mixedFeed}
-          keyExtractor={getFeedItemKey}
-          renderItem={renderFeedItem}
-          contentContainerStyle={{
-            padding: 16,
-            paddingBottom: insets.bottom + 20,
-          }}
-          ListHeaderComponent={
-            // Only show AI Summary in "All" category
-            selectedCategory === 'all' && digest && !digestLoading ? (
-              <DigestCard digest={digest} newsCounts={newsCounts} />
-            ) : null
-          }
-          ListEmptyComponent={
-            <View className="items-center justify-center py-12">
-              <Newspaper size={48} color="#9CA3AF" />
-              <Text className="text-gray-500 dark:text-gray-400 mt-4 text-center">
-                No news found for this date
-              </Text>
+            <BrandMark size={28} />
+            <View className="ml-2.5">
+              <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400">Today Ad Trend</Text>
+              <Text className="text-lg font-extrabold text-gray-900 dark:text-white">{formatEditionDate(localDateKey())}</Text>
             </View>
-          }
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor="#10B981" />
-          }
-          showsVerticalScrollIndicator={false}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-        />
-      )}
+          </View>
+          <View
+            className="flex-row items-center rounded-full px-3 py-1.5 bg-white dark:bg-ink-800 border border-gray-200 dark:border-ink-700"
+            accessibilityLabel={`${streakCount} day streak`}
+          >
+            <Flame size={16} color={streakCount > 0 ? COLORS.amber : COLORS.muted} />
+            <Text className="text-sm font-bold text-gray-900 dark:text-white ml-1">{streakCount}</Text>
+          </View>
+        </View>
+
+        {loading && !data ? <SkeletonList count={3} /> : null}
+
+        {failed ? <OfflineState onRetry={onRefresh} /> : null}
+
+        {!loading && !failed && !hasEdition ? (
+          <MessageState
+            title="Your first brief is on its way"
+            body="We publish a new brief every day. Meanwhile, the latest stories are in Explore."
+            actionLabel="Open Explore"
+            onAction={() => router.navigate('/explore')}
+          />
+        ) : null}
+
+        {data ? (
+          <>
+            <View className="rounded-2xl p-4 mb-4 bg-white dark:bg-ink-800 border border-gray-100 dark:border-ink-700">
+              <Pressable onPress={() => router.navigate('/settings')} accessibilityHint="Change your role in Settings">
+                <Text className="text-xs font-bold uppercase tracking-wide text-signal-600 dark:text-signal">
+                  {roleMeta(role).short} brief · {total} items · ~3 min
+                </Text>
+              </Pressable>
+              <Text className="text-[22px] leading-7 font-extrabold text-gray-900 dark:text-white mt-1.5">{data.headline}</Text>
+              <View className="h-1.5 rounded-full bg-gray-100 dark:bg-ink-700 mt-4 overflow-hidden">
+                <View
+                  className="h-1.5 rounded-full bg-signal"
+                  style={{ width: total ? `${(readCount / total) * 100}%` : '0%' }}
+                />
+              </View>
+              <View className="flex-row justify-between mt-2">
+                <Text className="text-xs text-gray-500 dark:text-gray-400">
+                  {readCount} of {total} read
+                </Text>
+                <Text className="text-xs text-gray-500 dark:text-gray-400">Updated {relativeTime(data.generatedAt)}</Text>
+              </View>
+            </View>
+
+            {done ? (
+              <DoneCard
+                streak={streakCount}
+                nextBriefLabel={remindersEnabled ? formatTime(briefTime.hour, briefTime.minute) : null}
+                onExplore={() => router.navigate('/explore')}
+              />
+            ) : null}
+
+            {data.items.map((item, index) => (
+              <BriefCard key={item.id} item={item} index={index} role={role} read={readIds.includes(item.id)} onOpen={onOpen} />
+            ))}
+
+            <Text className="text-xs text-center text-gray-400 dark:text-gray-500 mt-2 px-6 leading-[18px]">
+              Summaries and "so what" notes are AI-generated from the linked sources. Tap any item to read the original.
+            </Text>
+          </>
+        ) : null}
+      </ScrollView>
     </View>
   );
 }

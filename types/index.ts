@@ -1,95 +1,76 @@
-export interface Ad {
-  id: string;
-  advertiser_name: string;
-  advertiser_logo_url: string | null;
-  creative_type: 'image' | 'video' | 'playable';
-  creative_url: string;
-  thumbnail_url: string | null;
-  format: AdFormat;
-  category_id: string;
-  landing_url: string | null;
-  collected_at: string;
-  country_code: string;
-  view_count: number;
-  created_at: string;
+// Data contract for the static briefing API (`/v1`).
+// Keep in sync with pipeline/src/types.ts and docs/superpowers/specs/2026-10-25-daily-briefing-design.md §4.
+
+export type Role = 'performance' | 'ua' | 'brand';
+export type Section = 'news' | 'platform' | 'expert' | 'creative';
+
+export interface RoleTake {
+  relevance: 0 | 1 | 2 | 3;
+  soWhat: string;
 }
 
-export type AdFormat =
-  | 'banner'
-  | 'interstitial'
-  | 'rewarded'
-  | 'native'
-  | 'playable'
-  | 'app_open';
-
-export interface Category {
+export interface Item {
   id: string;
-  name_ko: string;
-  name_en: string;
-  tier: 1 | 2;
-  parent_id: string | null;
-  icon_name: string;
-  display_order: number;
-}
-
-export interface Collection {
-  id: string;
-  user_id: string;
-  name: string;
-  description: string | null;
-  is_public: boolean;
-  created_at: string;
-}
-
-export interface SavedAd {
-  id: string;
-  user_id: string;
-  ad_id: string;
-  collection_id: string | null;
-  saved_at: string;
-}
-
-// News Types
-export type NewsCategory = 'all' | 'adtech' | 'martech' | 'general';
-
-export interface AdNews {
-  id: string;
+  section: Section;
   title: string;
-  title_ko: string | null;
-  summary: string | null;
-  summary_ko: string | null;
-  category: string;
-  source: string | null;
-  source_url: string | null;
-  image_url: string | null;
-  published_at: string | null;
-  created_at: string;
-  is_featured: boolean;
+  url: string;
+  source: string;
+  publishedAt: string;
+  summary: string;
+  platforms: string[];
+  tags: string[];
+  importance: 1 | 2 | 3 | 4 | 5;
+  roles: Record<Role, RoleTake>;
+  imageUrl?: string;
+  enriched: boolean;
 }
 
-export interface AdNewsDigest {
-  id: string;
-  digest_date: string;
-  summary: string | null;
-  summary_ko: string | null;
-  total_news_count: number;
-  adtech_count: number;
-  martech_count: number;
-  general_count: number;
-  created_at: string;
+export interface Edition {
+  version: 1;
+  date: string;
+  role: Role;
+  generatedAt: string;
+  headline: string;
+  items: Item[];
 }
 
-// Feed Item Types for mixed news + ads list
-export type FeedItemType = 'news' | 'ad';
-
-export interface NewsFeedItem {
-  type: 'news';
-  data: AdNews;
+export interface PulseStat {
+  label: string;
+  share: number;
+  deltaPt: number;
 }
 
-export interface AdFeedItem {
-  type: 'ad';
-  id: string;
+export interface CreativePulse {
+  version: 1;
+  generatedAt: string;
+  weekStart: string;
+  weekEnd: string;
+  sample: {
+    shards: number;
+    totalShards: number;
+    creatives: number;
+    newThisWeek: number;
+    newPriorWeek: number;
+  };
+  formatMix: PulseStat[];
+  audienceSignals: PulseStat[];
+  topLaunchers: { advertiser: string; newCreatives: number; exampleUrl: string }[];
+  longRunners: { advertiser: string; format: string; firstShown: string; url: string }[];
+  insights: string[];
 }
 
-export type FeedItem = NewsFeedItem | AdFeedItem;
+export interface Feed {
+  version: 1;
+  generatedAt: string;
+  items: Item[];
+}
+
+export interface Latest {
+  version: 1;
+  generatedAt: string;
+  editionDate: string | null;
+  editions: Record<Role, string | null>;
+  feeds: Record<Section, string>;
+  pulse: string | null;
+  sources: { name: string; section: Section; url: string }[];
+}

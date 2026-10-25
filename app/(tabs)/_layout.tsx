@@ -1,62 +1,31 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
+import { Bookmark, Compass, Settings, Sunrise } from 'lucide-react-native';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Newspaper, LayoutGrid, Maximize, Gift, Settings } from 'lucide-react-native';
-
-const ACTIVE_COLOR = '#10B981'; // emerald-500
-const INACTIVE_COLOR = '#9CA3AF';
+import { COLORS } from '@/lib/config';
+import { usePrefs } from '@/stores/prefsStore';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const onboarded = usePrefs((s) => s.onboarded);
+  const dark = useColorScheme() === 'dark';
+
+  if (!onboarded) return <Redirect href="/onboarding" />;
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: ACTIVE_COLOR,
-        tabBarInactiveTintColor: INACTIVE_COLOR,
-        tabBarStyle: {
-          backgroundColor: isDark ? '#111827' : '#ffffff',
-          borderTopColor: isDark ? '#374151' : '#e5e7eb',
-        },
         headerShown: false,
+        tabBarActiveTintColor: dark ? '#FFFFFF' : COLORS.ink,
+        tabBarInactiveTintColor: COLORS.muted,
+        tabBarStyle: {
+          backgroundColor: dark ? '#0B1B2B' : '#FFFFFF',
+          borderTopColor: dark ? '#1A344D' : '#EAECF0',
+        },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'News',
-          tabBarIcon: ({ color, size }) => <Newspaper color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="banner"
-        options={{
-          title: 'Banner',
-          tabBarIcon: ({ color, size }) => <LayoutGrid color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="interstitial"
-        options={{
-          title: 'Interstitial',
-          tabBarIcon: ({ color, size }) => <Maximize color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="rewarded"
-        options={{
-          title: 'Rewarded',
-          tabBarIcon: ({ color, size }) => <Gift color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: ({ color, size }) => <Sunrise color={color} size={size} /> }} />
+      <Tabs.Screen name="explore" options={{ title: 'Explore', tabBarIcon: ({ color, size }) => <Compass color={color} size={size} /> }} />
+      <Tabs.Screen name="saved" options={{ title: 'Saved', tabBarIcon: ({ color, size }) => <Bookmark color={color} size={size} /> }} />
+      <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color, size }) => <Settings color={color} size={size} /> }} />
     </Tabs>
   );
 }
