@@ -1,5 +1,6 @@
 import { EDITION, ROLE_INFO, ROLES } from './config.ts';
 import type { LlmClient } from './llm.ts';
+import { normalizeTitle } from './ingest.ts';
 import { toPublicItem } from './publish.ts';
 import type { Edition, Item, Role } from './types.ts';
 import { HOUR_MS, containsLinkOrMarkup, log, promptText, stripControlChars, toIso, truncate, warn, ymd } from './util.ts';
@@ -47,33 +48,61 @@ function byScore(a: Scored, b: Scored): number {
   return b.score - a.score || b.item.publishedAt.localeCompare(a.item.publishedAt) || a.item.id.localeCompare(b.item.id);
 }
 
-// 다양성 캡을 지키며 점수순으로 고른다.
-// 1) 플랫폼 후보가 하나라도 있으면 가장 점수 높은 플랫폼 아이템을 먼저 확보한다.
+// Near-duplicate titles: token Jaccard on normalized titles without stopwords.
+// ("Amazon DVA+ Is Now in Open Beta: …" vs "Amazon DVA+ Open Beta Is Live: …" = 0.53)
+const TITLE_STOPWORDS = new Set([
+  'a', 'an', 'the', 'and', 'or', 'but', 'of', 'to', 'in', 'on', 'for', 'with', 'at', 'by', 'from', 'about', 'into', 'over',
+  'is', 'are', 'was', 'were', 'be', 'been', 'as', 'it', 'its', 'this', 'that', 'these', 'those', 'what', 'how', 'why',
+  'your', 'you', 'our', 'we', 'they', 'their', 'new', 'now', 'just', 'more', 'most',
+]);
+
+export function titleTokens(title: string): Set<string> {
+  return new Set(normalizeTitle(title).split(' ').filter((word) => word.length > 1 && !TITLE_STOPWORDS.has(word)));
+}
+
+export function jaccard(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let shared = 0;
+  for (const token of a) if (b.has(token)) shared++;
+  return shared / (a.size + b.size - shared);
+}
+
+/** Drops near-duplicates (Jaccard ≥ 0.5) across and within sources, keeping the higher-scoring one. */
+function suppressNearDuplicates(sorted: readonly Scored[]): Scored[] {
+  const kept: { candidate: Scored; tokens: Set<string> }[] = [];
+  for (const candidate of sorted) {
+    const tokens = titleTokens(candidate.item.title);
+    if (kept.some((k) => jaccard(k.tokens, tokens) >= EDITION.nearDuplicateJaccard)) continue;
+    kept.push({ candidate, tokens });
+  }
+  return kept.map((k) => k.candidate);
+}
+
+// 다양성 캡을 지키며 점수순으로 고른다. 캡은 절대 풀지 않는다(합성 펄스 아이템도 캡 계산에 포함).
+// 1) 플랫폼 후보가 있으면 가장 점수 높은 플랫폼 아이템을 먼저 확보한다 (= 필요하면 최저 점수 아이템을 대체).
 // 2) 섹션당 최대 3개, 출처당 최대 2개를 지키며 target개까지 채운다.
-// 3) 그래도 min개에 못 미치면 캡을 풀고 남은 후보를 점수순으로 채운다 ("minimum 5 when available").
-function pickWithCaps(sorted: readonly Scored[], target: number, min: number): Scored[] {
+function pickWithCaps(sorted: readonly Scored[], platformPick: Scored | undefined, target: number, already: readonly Item[]): Scored[] {
   const picked: Scored[] = [];
   const pickedIds = new Set<string>();
   const perSection = new Map<string, number>();
   const perSource = new Map<string, number>();
+  const count = (item: Item): void => {
+    perSection.set(item.section, (perSection.get(item.section) ?? 0) + 1);
+    perSource.set(item.source, (perSource.get(item.source) ?? 0) + 1);
+  };
+  for (const item of already) count(item);
+  const fitsCaps = (c: Scored): boolean =>
+    (perSection.get(c.item.section) ?? 0) < EDITION.maxPerSection && (perSource.get(c.item.source) ?? 0) < EDITION.maxPerSource;
   const take = (c: Scored): void => {
     picked.push(c);
     pickedIds.add(c.item.id);
-    perSection.set(c.item.section, (perSection.get(c.item.section) ?? 0) + 1);
-    perSource.set(c.item.source, (perSource.get(c.item.source) ?? 0) + 1);
+    count(c.item);
   };
-  const fitsCaps = (c: Scored): boolean =>
-    (perSection.get(c.item.section) ?? 0) < EDITION.maxPerSection && (perSource.get(c.item.source) ?? 0) < EDITION.maxPerSource;
 
-  const bestPlatform = sorted.find((c) => c.item.section === 'platform');
-  if (bestPlatform && target > 0) take(bestPlatform);
+  if (platformPick && target > 0 && fitsCaps(platformPick)) take(platformPick);
   for (const c of sorted) {
     if (picked.length >= target) break;
     if (!pickedIds.has(c.item.id) && fitsCaps(c)) take(c);
-  }
-  for (const c of sorted) {
-    if (picked.length >= min) break;
-    if (!pickedIds.has(c.item.id)) take(c);
   }
   return picked.sort(byScore);
 }
@@ -98,10 +127,9 @@ export function selectEditionItems(input: SelectionInput): Item[] | null {
   const regularTarget = Math.min(EDITION.target, EDITION.max - (pulse ? 1 : 0));
   const regularMin = EDITION.min - (pulse ? 1 : 0);
 
-  let picks: Scored[] = [];
-  for (const windowHours of [EDITION.windowHours, EDITION.fallbackWindowHours]) {
+  const eligible = (windowHours: number): Scored[] => {
     const from = cut.getTime() - windowHours * HOUR_MS;
-    const candidates = input.items
+    return input.items
       .filter((item) => {
         if (item.section === 'creative' || excluded.has(item.id)) return false;
         if (item.roles[role].relevance === 0) return false;
@@ -110,7 +138,22 @@ export function selectEditionItems(input: SelectionInput): Item[] | null {
       })
       .map((item) => ({ item, score: scoreItem(item, role, cut) }))
       .sort(byScore);
-    picks = pickWithCaps(candidates, regularTarget, regularMin);
+  };
+
+  // 48시간 후보로 최소 개수를 못 채우면 7일로 넓힌다. 그래도 안 되면 이 역할의 에디션은 만들지 않는다.
+  let picks: Scored[] = [];
+  for (const windowHours of [EDITION.windowHours, EDITION.fallbackWindowHours]) {
+    const pool = eligible(windowHours);
+    // Platform guarantee: when the window has no platform candidate, the best platform item of the
+    // 7-day window (relevance ≥ 1, not recently used) is brought in for that slot.
+    if (!pool.some((c) => c.item.section === 'platform')) {
+      const fallbackPlatform = eligible(EDITION.fallbackWindowHours).find((c) => c.item.section === 'platform');
+      if (fallbackPlatform) pool.push(fallbackPlatform);
+      pool.sort(byScore);
+    }
+    const candidates = suppressNearDuplicates(pool);
+    const platformPick = candidates.find((c) => c.item.section === 'platform');
+    picks = pickWithCaps(candidates, platformPick, regularTarget, pulse ? [pulse] : []);
     if (picks.length >= regularMin) break;
   }
   if (picks.length < regularMin) return null;

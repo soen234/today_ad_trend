@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  buildEditions, editionTargetDate, fallbackHeadline, freshness, generateHeadlines, mergeEditions, scoreItem, selectEditionItems, shouldBuildEdition,
+  buildEditions, editionTargetDate, fallbackHeadline, freshness, generateHeadlines, jaccard, mergeEditions, scoreItem, selectEditionItems,
+  shouldBuildEdition, titleTokens,
 } from '../src/edition.ts';
 import { fallbackFields } from '../src/enrich.ts';
 import { toPublicItem } from '../src/publish.ts';
@@ -132,10 +133,69 @@ describe('selectEditionItems', () => {
     assert.ok(!ids(picked).includes(tooOld.id), 'outside the 7-day window even though it is a platform item');
   });
 
-  it('relaxes the caps to reach the minimum of 5', () => {
+  it('never relaxes the caps: a single-source pool cannot fill an edition', () => {
     const sameSource = Array.from({ length: 5 }, (_, i) => makeItem({ section: 'news', source: 'Only', publishedAt: hoursAgo(i + 1) }));
-    const picked = select(sameSource);
-    assert.equal(picked?.length, 5);
+    assert.equal(select(sameSource), null);
+  });
+
+  describe('regression: the 2026-10-25 performance sample', () => {
+    // Reproduces the QA finding: four Common Thread Collective posts (two near-duplicates) dominated
+    // the 48 h pool, and the only platform items were older than 48 h.
+    const ctc = [
+      makeItem({ section: 'expert', source: 'Common Thread Collective', title: 'Google Is Now Auto-Generating Review Summaries in Your Search Ads: What Ecommerce Brands Must Do', publishedAt: hoursAgo(13), relevance: { performance: 2 } }),
+      makeItem({ section: 'expert', source: 'Common Thread Collective', title: 'Amazon DVA+ Is Now in Open Beta: The Unified Ad Tool Every Ecommerce Brand Must Test Before BFCM', publishedAt: hoursAgo(13.5), relevance: { performance: 2 } }),
+      makeItem({ section: 'expert', source: 'Common Thread Collective', title: 'Amazon DVA+ Open Beta Is Live: What Every Ecommerce Brand Must Do Before BFCM to Get Early Access', publishedAt: hoursAgo(19), relevance: { performance: 2 } }),
+      makeItem({ section: 'expert', source: 'Common Thread Collective', title: 'Shopify Just Guaranteed Your International Shipping Costs: What Every Ecommerce Brand Should Know', publishedAt: hoursAgo(20), relevance: { performance: 1 } }),
+    ];
+    const ppc = [
+      makeItem({ section: 'news', source: 'PPC Land', title: 'Google lets connected Gmail and Photos data shape ads, 5 years after pledge', publishedAt: hoursAgo(40), importance: 2, relevance: { performance: 1 } }),
+      makeItem({ section: 'news', source: 'PPC Land', title: 'Formula 1 starts selling audio ads through Consumable network', publishedAt: hoursAgo(41), importance: 2, relevance: { performance: 1 } }),
+    ];
+    const platformOld = [
+      makeItem({ section: 'platform', source: 'Google Ads Developer Blog', title: 'Upcoming changes to image extraction in Performance Max campaigns', publishedAt: hoursAgo(80), importance: 4, relevance: { performance: 1 } }),
+      makeItem({ section: 'platform', source: 'Google Ads & Commerce Blog', title: 'New bidding and budgeting tools for your holiday ad strategy', publishedAt: hoursAgo(75), importance: 4, relevance: { performance: 1 } }),
+    ];
+    const picked = select([...ctc, ...ppc, ...platformOld], { role: 'performance' });
+
+    it('keeps at most 2 items per source', () => {
+      assert.ok(picked);
+      assert.equal(picked.filter((item) => item.source === 'Common Thread Collective').length, 2);
+      const perSource = new Map<string, number>();
+      for (const item of picked) perSource.set(item.source, (perSource.get(item.source) ?? 0) + 1);
+      assert.ok([...perSource.values()].every((n) => n <= 2));
+    });
+
+    it('includes a platform item even though platform candidates are older than 48 h', () => {
+      assert.ok(picked?.some((item) => item.section === 'platform'));
+    });
+
+    it('keeps only one of the two Amazon DVA+ near-duplicates', () => {
+      assert.equal(picked?.filter((item) => item.title.startsWith('Amazon DVA+')).length, 1);
+      assert.ok(jaccard(titleTokens(ctc[1]?.title ?? ''), titleTokens(ctc[2]?.title ?? '')) >= 0.5);
+    });
+  });
+
+  it('replaces the lowest-scoring item to guarantee a platform item', () => {
+    const titles = [
+      'Meta raises Advantage+ budget minimums', 'TikTok Shop ads arrive in Germany', 'Amazon DSP cuts fees for agencies',
+      'Retail media networks consolidate measurement', 'Why incrementality tests beat attribution', 'CTV upfront pricing softens',
+    ];
+    const strong = titles.map((title, i) => makeItem({
+      section: i < 3 ? 'news' : 'expert', source: `Strong ${i}`, importance: 5, relevance: { performance: 3 }, publishedAt: hoursAgo(1 + i), title,
+    }));
+    const weakPlatform = makeItem({ section: 'platform', source: 'Weak Platform', importance: 1, relevance: { performance: 1 }, publishedAt: hoursAgo(30), title: 'Partner awards' });
+    const picked = select([...strong, weakPlatform]);
+    assert.equal(picked?.length, 6);
+    assert.ok(ids(picked).includes(weakPlatform.id));
+    assert.ok(!ids(picked).includes(strong[5]?.id ?? ''), 'the lowest-scoring regular item made room');
+  });
+
+  it('suppresses near-duplicates across sources, keeping the higher score', () => {
+    const higher = makeItem({ source: 'A', importance: 5, title: 'Google expands Performance Max controls for retail advertisers', publishedAt: hoursAgo(2) });
+    const lower = makeItem({ source: 'B', importance: 2, title: 'Google Performance Max controls expand for retail advertisers', publishedAt: hoursAgo(1) });
+    const picked = select([higher, lower, ...pool(6)]);
+    assert.ok(ids(picked).includes(higher.id));
+    assert.ok(!ids(picked).includes(lower.id));
   });
 
   it('returns null when fewer than 5 items are available', () => {
@@ -165,7 +225,17 @@ describe('selectEditionItems', () => {
       assert.equal(brand?.[0]?.id, pulseItem.id);
       assert.equal(perf?.at(-1)?.id, pulseItem.id);
       assert.equal(ua?.at(-1)?.id, pulseItem.id);
-      for (const picked of [brand, perf, ua]) assert.equal(picked?.length, 7);
+      for (const picked of [brand, perf, ua]) {
+        assert.equal(picked?.length, 7);
+        // Caps hold with the pulse item included.
+        const perSection = new Map<string, number>();
+        const perSource = new Map<string, number>();
+        for (const item of picked ?? []) {
+          perSection.set(item.section, (perSection.get(item.section) ?? 0) + 1);
+          perSource.set(item.source, (perSource.get(item.source) ?? 0) + 1);
+        }
+        assert.ok([...perSection.values()].every((n) => n <= 3) && [...perSource.values()].every((n) => n <= 2));
+      }
     });
 
     it('is left out when the pulse is older than 24 h', () => {
