@@ -48,7 +48,6 @@ export const SOURCES: readonly SourceConfig[] = [
   { section: 'news', name: 'Social Media Today', feedUrl: 'https://www.socialmediatoday.com/feeds/news/', homeUrl: 'https://www.socialmediatoday.com/' },
   { section: 'news', name: 'Adweek', feedUrl: 'https://www.adweek.com/feed/', homeUrl: 'https://www.adweek.com/' },
   { section: 'news', name: 'Marketing Dive', feedUrl: 'https://www.marketingdive.com/feeds/news/', homeUrl: 'https://www.marketingdive.com/' },
-  { section: 'news', name: 'Business of Apps', feedUrl: 'https://www.businessofapps.com/feed/', homeUrl: 'https://www.businessofapps.com/' },
   { section: 'news', name: 'Search Engine Journal (Paid Media)', feedUrl: 'https://www.searchenginejournal.com/category/paid-media/feed/', homeUrl: 'https://www.searchenginejournal.com/category/paid-media/' },
   // platform
   { section: 'platform', name: 'Meta for Business', feedUrl: 'https://www.facebook.com/business/news/rss?locale=en_US', homeUrl: 'https://www.facebook.com/business/news', platform: 'meta' },
