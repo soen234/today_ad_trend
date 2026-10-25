@@ -1,0 +1,108 @@
+name: Data pipeline
+
+# Ingests feeds, enriches them with GitHub Models, builds the role editions (21:00 UTC) and the
+# weekly Creative Pulse, keeps state on the orphan `data` branch and deploys /v1 JSON to Pages.
+on:
+  schedule:
+    - cron: '0 3,9,15,21 * * *'
+  workflow_dispatch:
+    inputs:
+      force_edition:
+        description: Build the edition for the target date now
+        type: boolean
+        default: false
+      force_pulse:
+        description: Rebuild the Creative Pulse now
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  models: read
+
+# Never run two pipelines at once (state on `data` would race); queue instead of cancelling.
+concurrency:
+  group: tat-pipeline
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: pipeline/package-lock.json
+
+      - name: Install pipeline dependencies
+        working-directory: pipeline
+        run: npm ci --omit=dev
+
+      - name: Unit tests
+        working-directory: pipeline
+        run: npm test
+
+      - name: Check out state from the data branch
+        run: |
+          if git ls-remote --exit-code --heads origin data > /dev/null 2>&1; then
+            git fetch --depth=1 origin data:refs/remotes/origin/data
+            git worktree add -B data data-branch origin/data
+          else
+            echo "No data branch yet; creating an orphan one"
+            git worktree add --detach data-branch
+            git -C data-branch switch --orphan data
+          fi
+          mkdir -p data-branch/state
+
+      - name: Run pipeline
+        env:
+          LLM_BASE_URL: https://models.github.ai/inference
+          LLM_MODEL: openai/gpt-4.1-mini
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY || github.token }}
+          FORCE_EDITION: ${{ inputs.force_edition }}
+          FORCE_PULSE: ${{ inputs.force_pulse }}
+        run: |
+          args=(--state-dir ./data-branch/state --out-dir ./public)
+          if [ "$FORCE_EDITION" = "true" ]; then args+=(--force-edition); fi
+          if [ "$FORCE_PULSE" = "true" ]; then args+=(--force-pulse); fi
+          node pipeline/src/main.ts "${args[@]}"
+
+      - name: Commit state to the data branch
+        working-directory: data-branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A state
+          if git diff --cached --quiet; then
+            echo "State unchanged"
+          else
+            git commit -m "chore(data): pipeline state $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push origin HEAD:refs/heads/data
+          fi
+
+      - name: Add Pages extras
+        run: cp pipeline/pages/index.html public/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
