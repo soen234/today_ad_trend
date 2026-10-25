@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
 import { Bookmark, Compass, Settings, Sunrise } from 'lucide-react-native';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -19,6 +20,8 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: dark ? '#0B1B2B' : '#FFFFFF',
           borderTopColor: dark ? '#1A344D' : '#EAECF0',
+          // 웹에는 하단 safe area가 없어 라벨 아래가 잘리므로 높이를 조금 준다
+          ...(Platform.OS === 'web' ? { height: 60, paddingBottom: 8 } : null),
         },
       }}
     >
