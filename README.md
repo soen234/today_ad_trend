@@ -31,7 +31,7 @@ npm run typecheck
 cd pipeline && npm ci && npm test && npm run dry-run   # pipeline tests and a local run without the LLM
 ```
 
-Point the app at another data host with `EXPO_PUBLIC_DATA_BASE_URL` (see `.env.example`).
+The data host is `DATA_BASE_URL` in `lib/config.ts`.
 
 ## Pipeline operations
 

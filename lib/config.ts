@@ -1,7 +1,7 @@
 import type { Role, Section } from '@/types';
 
-export const DATA_BASE_URL =
-  process.env.EXPO_PUBLIC_DATA_BASE_URL ?? 'https://soen234.github.io/today_ad_trend/v1';
+// 파이프라인이 GitHub Pages에 배포하는 정적 JSON (pipeline/, .github/workflows/pipeline.yml)
+export const DATA_BASE_URL = 'https://soen234.github.io/today_ad_trend/v1';
 
 export const WEBSITE_URL = 'https://todayadtrend.com';
 export const PRIVACY_URL = `${WEBSITE_URL}/privacy`;
