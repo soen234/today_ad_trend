@@ -127,12 +127,18 @@ function validateFeed(errors: Errors, at: string, value: unknown, section: Secti
     return;
   }
   if (items.length > FEED.maxItems) errors.add(`${at}.items`, `must have <= ${FEED.maxItems} items`);
+  // Order is newest first with sources interleaved, so it is not strictly sorted; the per-day cap is checked instead.
+  const perSourceDay = new Map<string, number>();
   items.forEach((item: unknown, i) => {
     validateItem(errors, `${at}.items[${i}]`, item);
-    if (isRecord(item) && item.section !== section) errors.add(`${at}.items[${i}].section`, `must be "${section}"`);
-    const prev: unknown = items[i - 1];
-    if (isRecord(prev) && isRecord(item) && String(prev.publishedAt) < String(item.publishedAt)) errors.add(`${at}.items`, 'must be newest first');
+    if (!isRecord(item)) return;
+    if (item.section !== section) errors.add(`${at}.items[${i}].section`, `must be "${section}"`);
+    const key = `${String(item.source)}|${String(item.publishedAt).slice(0, 10)}`;
+    perSourceDay.set(key, (perSourceDay.get(key) ?? 0) + 1);
   });
+  for (const [key, count] of perSourceDay) {
+    if (count > FEED.maxPerSourcePerDay) errors.add(`${at}.items`, `more than ${FEED.maxPerSourcePerDay} items for ${key}`);
+  }
   checkUniqueIds(errors, `${at}.items`, items);
 }
 

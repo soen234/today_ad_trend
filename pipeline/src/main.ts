@@ -7,7 +7,7 @@ import { realpathSync } from 'node:fs';
 import { appendFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { SOURCES } from './config.ts';
+import { INGEST, SOURCES } from './config.ts';
 import { buildEditions, editionTargetDate, mergeEditions, shouldBuildEdition } from './edition.ts';
 import { enrichItems } from './enrich.ts';
 import type { EnrichReport } from './enrich.ts';
@@ -80,7 +80,7 @@ export async function run(argv: string[]): Promise<number> {
   state.items = merged.items;
   const addedBySource = new Map<string, number>();
   for (const item of merged.added) addedBySource.set(item.source, (addedBySource.get(item.source) ?? 0) + 1);
-  log('ingest', `${merged.added.length} new items added to state`);
+  log('ingest', `${merged.added.length} new items added to state, ${merged.capped} skipped by the ${INGEST.maxPerSourcePerDay}/day per-source cap`);
 
   // 2. Enrich (never fails the run).
   const enrich = await enrichItems(state.items, llm);

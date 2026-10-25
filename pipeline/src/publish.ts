@@ -1,6 +1,7 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { FEED, PULSE_DATA_SOURCE, ROLES, SECTIONS, SOURCES } from './config.ts';
+import { capPerSourceDay } from './ingest.ts';
 import type { Edition, Item, Latest, PipelineState, Role, Section, SectionFeed } from './types.ts';
 import { DAY_MS, toIso } from './util.ts';
 
@@ -46,11 +47,36 @@ export function newestFirst(a: Item, b: Item): number {
   return b.publishedAt.localeCompare(a.publishedAt) || a.id.localeCompare(b.id);
 }
 
+/** Over the per-day cap, keep the highest importance once enriched; unenriched items rank by recency. */
+function feedRank(a: Item, b: Item): number {
+  const ia = a.enriched ? a.importance : 0;
+  const ib = b.enriched ? b.importance : 0;
+  return ib - ia || newestFirst(a, b);
+}
+
+/**
+ * Keeps the (newest-first) order but never emits more than `maxRun` consecutive items from one
+ * source while another source still has items; the next item from a different source is pulled up.
+ */
+export function interleaveSources<T extends { source: string }>(sorted: readonly T[], maxRun: number): T[] {
+  const remaining = [...sorted];
+  const out: T[] = [];
+  while (remaining.length > 0) {
+    const tail = out.slice(-maxRun);
+    const runSource = tail.length === maxRun && tail.every((item) => item.source === tail[0]?.source) ? tail[0]?.source : undefined;
+    let index = runSource === undefined ? 0 : remaining.findIndex((item) => item.source !== runSource);
+    if (index < 0) index = 0; // only that source is left
+    out.push(...remaining.splice(index, 1));
+  }
+  return out;
+}
+
+// 피드: 최근 14일, 출처별 하루 12개 제한, 시간순이되 같은 출처가 3개 넘게 연속되지 않게 섞은 뒤 최대 200개.
 export function buildFeed(items: readonly Item[], section: Section, now: Date): SectionFeed {
   const minTime = now.getTime() - FEED.days * DAY_MS;
-  const selected = items
-    .filter((item) => item.section === section && Date.parse(item.publishedAt) >= minTime)
-    .sort(newestFirst)
+  const recent = items.filter((item) => item.section === section && Date.parse(item.publishedAt) >= minTime);
+  const capped = capPerSourceDay(recent, FEED.maxPerSourcePerDay, feedRank);
+  const selected = interleaveSources([...capped].sort(newestFirst), FEED.maxConsecutivePerSource)
     .slice(0, FEED.maxItems)
     .map(toPublicItem);
   return { version: 1, generatedAt: toIso(now), items: selected };

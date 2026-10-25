@@ -83,6 +83,8 @@ export const INGEST = {
   maxAgeDays: 7,
   snippetMaxChars: 600,
   titleMaxChars: 300,
+  /** At most this many items per source per UTC day enter state (most recent first). */
+  maxPerSourcePerDay: 12,
 } as const;
 
 export const STATE = {
@@ -94,6 +96,10 @@ export const STATE = {
 export const FEED = {
   days: 14,
   maxItems: 200,
+  /** Per source per UTC day in feed output (highest importance once enriched, else most recent). */
+  maxPerSourcePerDay: 12,
+  /** Feeds are time-ordered but never show more than this many consecutive items from one source. */
+  maxConsecutivePerSource: 3,
 } as const;
 
 export const ENRICH = {

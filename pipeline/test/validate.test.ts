@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import { SOURCES } from '../src/config.ts';
-import { buildOutputs, toPublicItem, writeOutputs } from '../src/publish.ts';
+import { buildFeed, buildOutputs, interleaveSources, toPublicItem, writeOutputs } from '../src/publish.ts';
 import type { Outputs } from '../src/publish.ts';
 import { aggregateLines, fallbackInsights, pulseSyntheticItem, pulseWindow, summarizePulse } from '../src/pulse.ts';
 import { loadState, pruneState, saveState } from '../src/state.ts';
@@ -136,7 +136,11 @@ describe('validateOutputs', async () => {
       ['unknown platform', 'feed/news.json', set('items.0.platforms', ['myspace']), /platforms/],
       ['summary over 280', 'feed/news.json', set('items.0.summary', 'x'.repeat(281)), /summary/],
       ['non-UTC date', 'feed/news.json', set('items.0.publishedAt', '2026-10-25T12:00:00+02:00'), /ISO 8601 UTC/],
-      ['feed not newest first', 'feed/news.json', (v) => setPath(v, 'items', list(v, 'items').reverse()), /newest first/],
+      ['feed over the per-source daily cap', 'feed/news.json', (v) => {
+        const first = getPath(v, 'items.0');
+        const copies = Array.from({ length: 13 }, (_, i) => ({ ...(first as Record<string, unknown>), id: `${'abcdef0123'}${String(i).padStart(2, '0')}` }));
+        setPath(v, 'items', copies);
+      }, /more than 12 items for/],
       ['wrong section in feed', 'feed/news.json', set('items.0.section', 'expert'), /must be "news"/],
       ['pulse with 2 insights', 'pulse/latest.json', (v) => setPath(v, 'insights', list(v, 'insights').slice(0, 2)), /exactly 3/],
       ['pulse share above 1', 'pulse/latest.json', set('formatMix.0.share', 1.5), /0\.\.1/],
@@ -204,6 +208,34 @@ describe('buildOutputs', async () => {
       assert.ok(!('snippet' in item) && !('attempts' in item) && !('ingestedAt' in item));
     }
     assert.equal((outputs.get('feed/creative.json') as SectionFeed).items.length, 1);
+  });
+
+  it('caps a source at 12 items per UTC day and never shows more than 3 in a row while others remain', () => {
+    const at = (h: number): string => `2026-10-24T${String(h).padStart(2, '0')}:00:00Z`;
+    const flood = Array.from({ length: 20 }, (_, i) => makeItem({ section: 'news', source: 'Flood', publishedAt: at(23 - i), enriched: false }));
+    const a = makeItem({ section: 'news', source: 'A', publishedAt: '2026-10-24T05:30:00Z' });
+    const b = makeItem({ section: 'news', source: 'B', publishedAt: '2026-10-24T04:30:00Z' });
+    const feed = buildFeed([...flood, a, b], 'news', NOW);
+    const fromFlood = feed.items.filter((item) => item.source === 'Flood');
+    assert.equal(fromFlood.length, 12);
+    assert.deepEqual(fromFlood.map((item) => item.publishedAt), flood.slice(0, 12).map((item) => item.publishedAt), 'most recent when unenriched');
+    assert.deepEqual(feed.items.map((item) => item.source), [
+      'Flood', 'Flood', 'Flood', 'A', 'Flood', 'Flood', 'Flood', 'B', 'Flood', 'Flood', 'Flood', 'Flood', 'Flood', 'Flood',
+    ]);
+  });
+
+  it('keeps the highest-importance items once enriched', () => {
+    const items = Array.from({ length: 14 }, (_, i) => makeItem({
+      section: 'expert', source: 'Busy', publishedAt: `2026-10-24T${String(23 - i).padStart(2, '0')}:00:00Z`, enriched: true, importance: i < 2 ? 1 : 4,
+    }));
+    const feed = buildFeed(items, 'expert', NOW);
+    assert.equal(feed.items.length, 12);
+    assert.ok(feed.items.every((item) => item.importance === 4), 'the two newest low-importance items are dropped');
+  });
+
+  it('interleaveSources preserves order within each source', () => {
+    const seq = ['A', 'A', 'A', 'A', 'A', 'B', 'C', 'A'].map((source, i) => ({ source, i }));
+    assert.deepEqual(interleaveSources(seq, 3).map((x) => `${x.source}${x.i}`), ['A0', 'A1', 'A2', 'B5', 'A3', 'A4', 'C6', 'A7']);
   });
 
   it('caps feeds at 200 items and handles an empty state', () => {

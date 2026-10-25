@@ -130,6 +130,41 @@ export function truncate(text: string, max: number): string {
   return `${cut.replace(/[\s.,;:!?\-–—]+$/u, '')}…`;
 }
 
+const SENTENCE_END = /[.!?]["'”’)\]]*(?=\s|$)/g;
+const ENDS_WITH_SENTENCE = /[.!?]["'”’)\]]*$/;
+
+/** Index just after the last sentence end in `text`, or -1. */
+function lastSentenceEnd(text: string): number {
+  let end = -1;
+  for (const match of text.matchAll(SENTENCE_END)) end = (match.index ?? 0) + match[0].length;
+  return end;
+}
+
+/**
+ * Text that was cut mid-sentence (by the publisher, with or without a trailing "…") ends at its
+ * last complete sentence, as long as that keeps at least 40% of it. Complete text, and text
+ * without any sentence break (subtitles, single clauses), is returned unchanged.
+ */
+export function trimToLastSentence(text: string): string {
+  const clean = collapseWhitespace(text);
+  const cutMarker = /(?:…|\.\.\.)$/.test(clean);
+  if (!clean || (!cutMarker && ENDS_WITH_SENTENCE.test(clean))) return clean;
+  const body = clean.replace(/\s*(?:…|\.\.\.)$/, '');
+  const end = lastSentenceEnd(body);
+  if (end > 0 && end >= Math.floor(body.length * 0.4)) return body.slice(0, end);
+  return cutMarker ? `${body}…` : body;
+}
+
+/** Like `truncate`, but prefers ending at the last full sentence within `max` characters. */
+export function truncateToSentence(text: string, max: number): string {
+  const clean = collapseWhitespace(text);
+  if (clean.length <= max) return trimToLastSentence(clean);
+  const window = clean.slice(0, max);
+  const end = lastSentenceEnd(window);
+  if (end > 0 && end >= Math.floor(max * 0.4)) return window.slice(0, end);
+  return truncate(clean, max);
+}
+
 // ---------------------------------------------------------------------------
 // Dates (everything is UTC)
 

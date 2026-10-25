@@ -2,7 +2,7 @@ import { ENRICH, PLATFORMS, ROLE_INFO, ROLES } from './config.ts';
 import type { Platform, SourceConfig } from './config.ts';
 import type { LlmClient } from './llm.ts';
 import type { Item, Role, RoleTake, StoredItem } from './types.ts';
-import { containsLinkOrMarkup, log, promptText, stripControlChars, truncate, warn } from './util.ts';
+import { containsLinkOrMarkup, log, promptText, stripControlChars, truncate, truncateToSentence, warn } from './util.ts';
 
 // ---------------------------------------------------------------------------
 // Rule-based fallback (used at ingest and whenever the LLM fails)
@@ -100,7 +100,7 @@ export function fallbackFields(
 ): Pick<Item, 'summary' | 'platforms' | 'tags' | 'importance' | 'roles' | 'enriched'> {
   const text = `${title} ${snippet}`;
   return {
-    summary: truncate(snippet || title, ENRICH.summaryMaxChars),
+    summary: truncateToSentence(snippet || title, ENRICH.summaryMaxChars),
     platforms: platformsFromText(text, source.platform),
     tags: [],
     importance: fallbackImportance(title, source.section),

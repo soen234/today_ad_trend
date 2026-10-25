@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { SourceConfig } from '../src/config.ts';
-import { canonicalizeUrl, dedupeItems, entriesToItems, ingestAll, itemId, mergeNewItems, normalizeTitle, parseFeed } from '../src/ingest.ts';
-import { containsLinkOrMarkup, parseFeedDate, parseHttpUrl, sha1Hex, stripControlChars, stripHtml, stripLinksAndMarkup } from '../src/util.ts';
+import {
+  canonicalizeUrl, capPerSourceDay, cleanSnippet, dedupeItems, entriesToItems, ingestAll, isGlossaryEntry, isPuzzleTitle, itemId, mergeNewItems,
+  normalizeTitle, parseFeed,
+} from '../src/ingest.ts';
+import {
+  containsLinkOrMarkup, parseFeedDate, parseHttpUrl, sha1Hex, stripControlChars, stripHtml, stripLinksAndMarkup, truncateToSentence,
+} from '../src/util.ts';
 import { fixture, makeItem } from './helpers.ts';
 
 const NOW = new Date('2026-10-25T21:00:00Z');
@@ -261,6 +266,111 @@ describe('ingestAll', () => {
     ]);
     assert.equal(reports[2]?.status, 403);
     assert.ok(seen.every((s) => s.ua === 'TodayAdTrendBot/1.0 (+https://todayadtrend.com)'));
+  });
+});
+
+describe('snippet cleanup', () => {
+  it('strips feed boilerplate tails', () => {
+    const cases: [string, string][] = [
+      ['Shopify absorbs the cost now. More', 'Shopify absorbs the cost now.'],
+      ['Budgets shift to CTV. Read more »', 'Budgets shift to CTV.'],
+      ['Budgets shift to CTV. Continue reading…', 'Budgets shift to CTV.'],
+      ['Budgets shift to CTV. Continue reading "Why budgets shift" →', 'Budgets shift to CTV.'],
+      ['Budgets shift to CTV. The second sentence is cut [...]', 'Budgets shift to CTV.'],
+      ['Budgets shift to CTV. The second sentence is cut […]', 'Budgets shift to CTV.'],
+      ['Budgets shift to CTV. The post Budgets shift appeared first on Example News.', 'Budgets shift to CTV.'],
+      ['Budgets shift to CTV. This article originally appeared on Example News.', 'Budgets shift to CTV.'],
+      ['Budgets shift to CTV. Originally published at example news.', 'Budgets shift to CTV.'],
+      ['Budgets shift to CTV. Learn more', 'Budgets shift to CTV.'],
+      ['Budgets shift to CTV. Read more The post X appeared first on Y.', 'Budgets shift to CTV.'],
+    ];
+    for (const [input, expected] of cases) assert.equal(cleanSnippet(input), expected, input);
+  });
+
+  it('keeps legitimate endings', () => {
+    assert.equal(cleanSnippet('Advertisers want more'), 'Advertisers want more');
+    assert.equal(cleanSnippet('How I AI, part of the Lenny’s Podcast Network'), 'How I AI, part of the Lenny’s Podcast Network');
+  });
+
+  it('ends cut-off text at the last full sentence', () => {
+    assert.equal(
+      cleanSnippet('Customers expect far more human effort and delight than most brands deliver. Teams relentlessly improve the productivity of the'),
+      'Customers expect far more human effort and delight than most brands deliver.',
+    );
+    assert.equal(cleanSnippet('First sentence is complete. Second one ends with a cut…'), 'First sentence is complete.');
+    assert.equal(cleanSnippet('A single long clause that the publisher cut off…'), 'A single long clause that the publisher cut off…');
+  });
+
+  it('truncates to the last full sentence within the limit', () => {
+    const text = `${'Short sentence here. '.repeat(20)}Tail without end`;
+    const out = truncateToSentence(text, 280);
+    assert.ok(out.length <= 280);
+    assert.ok(out.endsWith('here.'));
+    const oneSentence = `${'word '.repeat(80)}end.`;
+    const cut = truncateToSentence(oneSentence, 100);
+    assert.ok(cut.length <= 100 && cut.endsWith('…'), 'no sentence break: word boundary with an ellipsis');
+  });
+
+  it('fallback summaries end at a sentence boundary', () => {
+    const snippet = cleanSnippet(`${'The holiday quarter starts early this year. '.repeat(8)}And this final clause gets`);
+    const { items } = entriesToItems([{ title: 'Holiday plans', link: 'https://news.example.com/h', publishedAt: new Date('2026-10-25T10:00:00Z'), snippet }], NEWS, NOW);
+    assert.ok(items[0]?.summary.endsWith('this year.'));
+    assert.ok((items[0]?.summary.length ?? 0) <= 280);
+  });
+});
+
+describe('non-news entries', () => {
+  it('detects glossary pages: <= 4 words, no headline verb, slug equals the slugified title', () => {
+    assert.equal(isGlossaryEntry('Deals API', 'https://ppc.land/deals-api/'), true);
+    assert.equal(isGlossaryEntry('AAMP', 'https://ppc.land/aamp/'), true);
+    assert.equal(isGlossaryEntry('EU AI Act', 'https://ppc.land/eu-ai-act/'), true);
+    assert.equal(isGlossaryEntry('Customer journey tracking', 'https://ppc.land/customer-journey-tracking/'), true);
+    assert.equal(isGlossaryEntry('Value-based bidding', 'https://ppc.land/value-based-bidding/'), true);
+    assert.equal(isGlossaryEntry('Meta launches Reels ads', 'https://ppc.land/meta-launches-reels-ads/'), false, 'has a verb');
+    assert.equal(isGlossaryEntry('Google delayed cookie deprecation', 'https://ppc.land/google-delayed-cookie-deprecation/'), false, '-ed verb');
+    assert.equal(isGlossaryEntry('Spotify direct ad sales fall €53m as automated buying lifts growth', 'https://ppc.land/spotifys-direct-ad-sales-fall-eur53m/'), false, 'long title');
+    assert.equal(isGlossaryEntry('Deals API', 'https://ppc.land/2026/10/news-1234/'), false, 'slug differs');
+  });
+
+  it('detects puzzle posts', () => {
+    assert.equal(isPuzzleTitle('Game: Half the trade’s jargon exists to explain what broke'), true);
+    assert.equal(isPuzzleTitle('Gaming ad spend grows'), false);
+  });
+
+  it('drops glossary entries from news sources only, and puzzles everywhere', () => {
+    const at = new Date('2026-10-25T10:00:00Z');
+    const entries = [
+      { title: 'Deals API', link: 'https://ppc.land/deals-api/', publishedAt: at, snippet: '' },
+      { title: 'Game: Nobody warns a new hire', link: 'https://ppc.land/game-nobody-warns/', publishedAt: at, snippet: '' },
+      { title: 'Google Ads lets retailers multiply new customer values', link: 'https://ppc.land/google-ads-lets-retailers/', publishedAt: at, snippet: '' },
+    ];
+    const news = entriesToItems(entries, NEWS, NOW);
+    assert.equal(news.stats.nonNews, 2);
+    assert.deepEqual(news.items.map((i) => i.title), ['Google Ads lets retailers multiply new customer values']);
+    const expertSource: SourceConfig = { name: 'Seth Godin', section: 'expert', feedUrl: 'https://seths.blog/feed/', homeUrl: 'https://seths.blog/' };
+    const expert = entriesToItems([{ title: 'Mirrors and windows', link: 'https://seths.blog/2026/10/mirrors-and-windows/', publishedAt: at, snippet: '' }], expertSource, NOW);
+    assert.equal(expert.items.length, 1, 'short essay titles on expert blogs are kept');
+  });
+});
+
+describe('per-source daily cap at ingest', () => {
+  it('admits at most 12 items per source per UTC day, most recent first, counting state', () => {
+    const day = (h: number): string => `2026-10-24T${String(h).padStart(2, '0')}:00:00Z`;
+    const existing = Array.from({ length: 5 }, (_, i) => makeItem({ source: 'PPC Land', publishedAt: day(i), title: `Existing ${i}` }));
+    const incoming = Array.from({ length: 10 }, (_, i) => makeItem({ source: 'PPC Land', publishedAt: day(10 + i), title: `Incoming ${i}` }));
+    const otherDay = makeItem({ source: 'PPC Land', publishedAt: '2026-10-23T12:00:00Z', title: 'Other day' });
+    const otherSource = makeItem({ source: 'Digiday', publishedAt: day(12), title: 'Other source' });
+    const { added, capped } = mergeNewItems(existing, [...incoming, otherDay, otherSource]);
+    assert.equal(capped, 3);
+    const titles = added.map((item) => item.title);
+    assert.deepEqual(titles.filter((t) => t.startsWith('Incoming')).sort(), ['Incoming 3', 'Incoming 4', 'Incoming 5', 'Incoming 6', 'Incoming 7', 'Incoming 8', 'Incoming 9']);
+    assert.ok(titles.includes('Other day') && titles.includes('Other source'));
+  });
+
+  it('capPerSourceDay keeps input order and uses the given ranking', () => {
+    const items = Array.from({ length: 4 }, (_, i) => makeItem({ source: 'S', publishedAt: `2026-10-24T0${i}:00:00Z`, importance: (i + 1) as 1 | 2 | 3 | 4 }));
+    const kept = capPerSourceDay(items, 2, (a, b) => b.importance - a.importance);
+    assert.deepEqual(kept.map((i) => i.importance), [3, 4]);
   });
 });
 
