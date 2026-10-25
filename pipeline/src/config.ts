@@ -85,6 +85,13 @@ export const INGEST = {
   titleMaxChars: 300,
   /** At most this many items per source per UTC day enter state (most recent first). */
   maxPerSourcePerDay: 12,
+  // Denial-of-service bounds for third-party feeds.
+  maxFeedBytes: 5 * 1024 * 1024,
+  maxItemsPerFeed: 200,
+  /** Raw (pre-regex) character caps per field. */
+  maxRawTitleChars: 2_000,
+  maxRawTextChars: 20_000,
+  maxRawLinkChars: 2_000,
 } as const;
 
 export const STATE = {
@@ -137,6 +144,8 @@ export const EDITION = {
   maxPerSection: 3,
   maxPerSource: 2,
   previousEditionsExcluded: 2,
+  /** Titles this similar (token Jaccard, stopwords removed) count as the same story. */
+  nearDuplicateJaccard: 0.5,
   pulseFreshHours: 24,
   headlineMaxChars: 140,
 } as const;
@@ -158,6 +167,10 @@ export const PULSE = {
   currentGenerationHours: 36,
   /** Week-over-week deltas are only reported when both weeks have at least this many new creatives in the sample. */
   minNewForDelta: 300,
+  // Bounds for GCS responses: listing pages are ~100 KB, shards ~170 MB with ~3 KB lines.
+  maxListBytes: 5 * 1024 * 1024,
+  maxShardBytes: 512 * 1024 * 1024,
+  maxLineChars: 1_000_000,
   /** weekEnd = today(UTC) − 2 days (the dump lags by about a day). */
   weekEndLagDays: 2,
   longRunnerMinDays: 90,

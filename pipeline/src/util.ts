@@ -239,6 +239,105 @@ export async function mapLimit<T, R>(items: readonly T[], limit: number, fn: (it
   return results;
 }
 
+// ---------------------------------------------------------------------------
+// Bounded network reads (third-party bodies must not exhaust memory or hang the run)
+
+export class BodyTooLargeError extends Error {
+  constructor(maxBytes: number) {
+    super(`response body exceeds ${maxBytes} bytes`);
+    this.name = 'BodyTooLargeError';
+  }
+}
+
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) throw signal.reason instanceof Error ? signal.reason : new Error('request aborted');
+}
+
+/**
+ * Reads a response body as UTF-8 text with a hard byte cap. The read is aborted (and the stream
+ * cancelled) as soon as the cap or the signal's deadline is hit, so the timeout covers the body too.
+ */
+export async function readBodyCapped(res: Response, maxBytes: number, signal?: AbortSignal): Promise<string> {
+  const declared = Number(res.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    await res.body?.cancel().catch(() => undefined);
+    throw new BodyTooLargeError(maxBytes);
+  }
+  if (!res.body) return '';
+  const reader = res.body.getReader();
+  const onAbort = (): void => {
+    reader.cancel().catch(() => undefined);
+  };
+  signal?.addEventListener('abort', onAbort, { once: true });
+  try {
+    const decoder = new TextDecoder();
+    let text = '';
+    let total = 0;
+    for (;;) {
+      throwIfAborted(signal);
+      const { done, value } = await reader.read();
+      throwIfAborted(signal);
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => undefined);
+        throw new BodyTooLargeError(maxBytes);
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    return text + decoder.decode();
+  } finally {
+    signal?.removeEventListener('abort', onAbort);
+  }
+}
+
+/**
+ * Splits a byte stream into lines with bounded memory: lines longer than `maxLineChars` are dropped
+ * (counted in `stats.oversized`), and the whole stream fails once it exceeds `maxBytes`.
+ */
+export async function* boundedLines(
+  stream: ReadableStream<Uint8Array>,
+  limits: { maxLineChars: number; maxBytes: number },
+  stats: { oversized: number } = { oversized: 0 },
+): AsyncGenerator<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let pending = '';
+  let skipping = false; // inside an over-long line: drop text until the next newline
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > limits.maxBytes) throw new BodyTooLargeError(limits.maxBytes);
+      let chunk = decoder.decode(value, { stream: true });
+      for (;;) {
+        const newline = chunk.indexOf('\n');
+        if (newline < 0) break;
+        const part = chunk.slice(0, newline);
+        chunk = chunk.slice(newline + 1);
+        if (skipping) skipping = false;
+        else if (pending.length + part.length > limits.maxLineChars) stats.oversized++;
+        else yield pending + part;
+        pending = '';
+      }
+      if (skipping) continue;
+      if (pending.length + chunk.length > limits.maxLineChars) {
+        stats.oversized++;
+        pending = '';
+        skipping = true;
+      } else {
+        pending += chunk;
+      }
+    }
+    const rest = pending + decoder.decode();
+    if (!skipping && rest) yield rest;
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
+}
+
 export function errorMessage(err: unknown): string {
   if (err instanceof Error) {
     const cause = err.cause instanceof Error ? ` (${err.cause.message})` : '';

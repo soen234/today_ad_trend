@@ -5,7 +5,7 @@ import { fallbackFields, isOffTopicTitle } from './enrich.ts';
 import type { StoredItem } from './types.ts';
 import type { FetchLike } from './util.ts';
 import {
-  DAY_MS, decodeEntities, errorMessage, log, mapLimit, parseFeedDate, parseHttpUrl, sha1Hex, stripControlChars, stripHtml,
+  DAY_MS, decodeEntities, errorMessage, log, mapLimit, parseFeedDate, parseHttpUrl, readBodyCapped, sha1Hex, stripControlChars, stripHtml,
   stripLinksAndMarkup, toIso, truncate, truncateToSentence, warn,
 } from './util.ts';
 
@@ -47,28 +47,37 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [value];
 }
 
+/** Removes CDATA markers (also a dangling one left by a length cap). */
 function unwrapCdata(text: string): string {
-  return text.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
+  return text.replace(/<!\[CDATA\[|\]\]>/g, '');
 }
 
-/** Raw text of a node (string, {#text}, or first array element), CDATA unwrapped. */
-function rawText(value: unknown): string {
-  if (Array.isArray(value)) return rawText(value[0]);
-  if (typeof value === 'string') return unwrapCdata(value);
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (isNode(value) && value['#text'] !== undefined) return rawText(value['#text']);
+/**
+ * Raw text of a node (string, {#text}, or first array element), CDATA unwrapped, capped at `max`
+ * characters before any regex work.
+ */
+function rawText(value: unknown, max: number): string {
+  if (Array.isArray(value)) return rawText(value[0], max);
+  if (typeof value === 'string') return unwrapCdata(value.slice(0, max));
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value).slice(0, max);
+  if (isNode(value) && value['#text'] !== undefined) return rawText(value['#text'], max);
   return '';
 }
 
 function attr(node: unknown, name: string): string {
   if (!isNode(node)) return '';
   const value = node[`@_${name}`];
-  return typeof value === 'string' ? decodeEntities(value).trim() : '';
+  return typeof value === 'string' ? decodeEntities(value.slice(0, INGEST.maxRawLinkChars)).trim() : '';
 }
 
-function plain(value: unknown): string {
-  return stripHtml(rawText(value));
+function plain(value: unknown, max: number): string {
+  return stripHtml(rawText(value, max));
 }
+
+const TITLE = INGEST.maxRawTitleChars;
+const TEXT = INGEST.maxRawTextChars;
+const LINK = INGEST.maxRawLinkChars;
+const DATE = 200;
 
 // Feed boilerplate at the end of snippets, removed repeatedly until none is left.
 const TRAILERS: readonly RegExp[] = [
@@ -88,7 +97,8 @@ function cleanUntrusted(text: string): string {
 
 /** Plain-text snippet: boilerplate tails removed, cut at the last full sentence within 600 chars. */
 export function cleanSnippet(text: string): string {
-  let out = cleanUntrusted(text);
+  // Only the start matters for a 600-char snippet; cap before the regex passes.
+  let out = cleanUntrusted(text.slice(0, INGEST.snippetMaxChars * 4));
   let previous = '';
   while (out !== previous) {
     previous = out;
@@ -124,18 +134,19 @@ function pickImage(node: Node): string | undefined {
 }
 
 function rssEntry(item: Node): FeedEntry {
-  let link = decodeEntities(rawText(item.link)).trim();
+  let link = decodeEntities(rawText(item.link, LINK)).trim();
   if (!link) {
     const guid = item.guid;
     const permalink = attr(guid, 'isPermaLink').toLowerCase() !== 'false';
-    const guidText = decodeEntities(rawText(guid)).trim();
+    const guidText = decodeEntities(rawText(guid, LINK)).trim();
     if (permalink && /^https?:\/\//i.test(guidText)) link = guidText;
   }
   if (!link) link = atomLink(item['atom:link']);
-  const date = rawText(item.pubDate) || rawText(item['dc:date']) || rawText(item.published) || rawText(item.updated) || rawText(item['atom:updated']);
-  const description = plain(item.description);
-  const snippet = description || plain(item['content:encoded']);
-  return { title: plain(item.title), link, publishedAt: parseFeedDate(date), snippet: cleanSnippet(snippet), imageUrl: pickImage(item) };
+  const date = rawText(item.pubDate, DATE) || rawText(item['dc:date'], DATE) || rawText(item.published, DATE)
+    || rawText(item.updated, DATE) || rawText(item['atom:updated'], DATE);
+  const description = plain(item.description, TEXT);
+  const snippet = description || plain(item['content:encoded'], TEXT);
+  return { title: plain(item.title, TITLE), link, publishedAt: parseFeedDate(date), snippet: cleanSnippet(snippet), imageUrl: pickImage(item) };
 }
 
 function atomLink(links: unknown): string {
@@ -153,25 +164,34 @@ function atomLink(links: unknown): string {
 }
 
 function atomEntry(entry: Node): FeedEntry {
-  const date = rawText(entry.published) || rawText(entry.updated);
-  const snippet = plain(entry.summary) || plain(entry.content);
-  return { title: plain(entry.title), link: atomLink(entry.link), publishedAt: parseFeedDate(date), snippet: cleanSnippet(snippet), imageUrl: pickImage(entry) };
+  const date = rawText(entry.published, DATE) || rawText(entry.updated, DATE);
+  const snippet = plain(entry.summary, TEXT) || plain(entry.content, TEXT);
+  return { title: plain(entry.title, TITLE), link: atomLink(entry.link), publishedAt: parseFeedDate(date), snippet: cleanSnippet(snippet), imageUrl: pickImage(entry) };
 }
 
-/** Parses RSS 2.0, RSS 1.0 (RDF) and Atom documents. Throws on anything else. */
+/** First 200 entries only, before any per-item processing. */
+function firstEntries(value: unknown): Node[] {
+  return asArray(value).slice(0, INGEST.maxItemsPerFeed).filter(isNode);
+}
+
+/**
+ * Parses RSS 2.0, RSS 1.0 (RDF) and Atom documents. Throws on anything else. Entity processing is
+ * off in the XML parser (no DOCTYPE/entity expansion, so "billion laughs" cannot blow up); we
+ * decode standard XML/HTML and numeric entities ourselves on bounded strings.
+ */
 export function parseFeed(xml: string): FeedEntry[] {
   const doc = parser.parse(xml) as unknown;
   if (!isNode(doc)) throw new Error('empty document');
   if (isNode(doc.rss)) {
     const channel = asArray(doc.rss.channel).find(isNode);
-    return asArray(channel?.item).filter(isNode).map(rssEntry);
+    return firstEntries(channel?.item).map(rssEntry);
   }
   if (isNode(doc.feed)) {
-    return asArray(doc.feed.entry).filter(isNode).map(atomEntry);
+    return firstEntries(doc.feed.entry).map(atomEntry);
   }
   const rdf = doc['rdf:RDF'];
   if (isNode(rdf)) {
-    return asArray(rdf.item).filter(isNode).map(rssEntry);
+    return firstEntries(rdf.item).map(rssEntry);
   }
   throw new Error('not an RSS or Atom document');
 }
@@ -417,17 +437,29 @@ export interface FeedReport {
   ms: number;
 }
 
-export async function fetchFeedText(url: string, fetchImpl: FetchLike): Promise<{ status: number; text: string }> {
+export interface FetchLimits { timeoutMs: number; maxBytes: number }
+
+const FEED_LIMITS: FetchLimits = { timeoutMs: INGEST.timeoutMs, maxBytes: INGEST.maxFeedBytes };
+
+/**
+ * Fetches a feed with a single deadline covering headers and body, and a hard 5 MB body cap
+ * (checked against Content-Length first, then while streaming). Over the cap → error, feed skipped.
+ */
+export async function fetchFeedText(url: string, fetchImpl: FetchLike, limits: FetchLimits = FEED_LIMITS): Promise<{ status: number; text: string }> {
+  const signal = AbortSignal.timeout(limits.timeoutMs);
   const res = await fetchImpl(url, {
     headers: {
       'user-agent': USER_AGENT,
       accept: 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.5',
     },
     redirect: 'follow',
-    signal: AbortSignal.timeout(INGEST.timeoutMs),
+    signal,
   });
-  const text = await res.text();
-  if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  if (!res.ok) {
+    await res.body?.cancel().catch(() => undefined);
+    throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  }
+  const text = await readBodyCapped(res, limits.maxBytes, signal);
   return { status: res.status, text };
 }
 

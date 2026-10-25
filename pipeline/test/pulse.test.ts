@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  aggregateLines, createAggregate, currentGeneration, deltasReported, fallbackInsights, generateInsights, mergeAggregates, pulseItemId,
+  aggregateLines, createAggregate, currentGeneration, deltasReported, fallbackInsights, generateInsights, listShardObjects, mergeAggregates, pulseItemId,
   pulseSyntheticItem, pulseWindow, runPulse, selectShards, shouldRebuildPulse, summarizePulse, weekLabel,
 } from '../src/pulse.ts';
 import type { CreativePulse } from '../src/types.ts';
@@ -200,6 +200,13 @@ describe('synthetic creative item', () => {
     const { attempts, ingestedAt, snippet, ...publicItem } = item;
     void attempts; void ingestedAt; void snippet;
     assert.deepEqual(itemErrors(publicItem), []);
+  });
+});
+
+describe('GCS listing bounds', () => {
+  it('rejects an oversized listing response', async () => {
+    const fetchImpl = async (): Promise<Response> => new Response('{}', { status: 200, headers: { 'content-length': String(6 * 1024 * 1024) } });
+    await assert.rejects(listShardObjects(fetchImpl), /exceeds/);
   });
 });
 

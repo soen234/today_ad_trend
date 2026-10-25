@@ -1,13 +1,10 @@
-import { createInterface } from 'node:readline';
-import { Readable } from 'node:stream';
-import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import { ENRICH, PULSE, PULSE_ITEM_SOURCE, PULSE_PAGE_URL, USER_AGENT } from './config.ts';
 import { canonicalizeUrl, itemId } from './ingest.ts';
 import type { LlmClient } from './llm.ts';
 import type { CreativePulse, PulseStat, StoredItem } from './types.ts';
 import type { FetchLike } from './util.ts';
 import {
-  DAY_MS, addDays, containsLinkOrMarkup, errorMessage, isYmd, log, mapLimit, parseHttpUrl, promptText, sha1Hex, stripControlChars,
+  DAY_MS, addDays, boundedLines, containsLinkOrMarkup, errorMessage, isYmd, log, mapLimit, parseHttpUrl, promptText, readBodyCapped, sha1Hex, stripControlChars,
   stripLinksAndMarkup, toIso, truncate, warn, ymd,
 } from './util.ts';
 
@@ -520,9 +517,14 @@ export async function listShardObjects(fetchImpl: FetchLike): Promise<ShardObjec
   let pageToken = '';
   for (let page = 0; page < 50; page++) {
     const url = `${PULSE.listUrl}?prefix=${PULSE.prefix}&fields=items(name,updated),nextPageToken&maxResults=1000${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`;
-    const res = await fetchImpl(url, { headers: { 'user-agent': USER_AGENT }, signal: AbortSignal.timeout(PULSE.listTimeoutMs) });
-    if (!res.ok) throw new Error(`shard listing HTTP ${res.status}`);
-    const body = (await res.json()) as { items?: { name?: unknown; updated?: unknown }[]; nextPageToken?: unknown };
+    // Same discipline as feeds: one deadline for headers and body, and a hard size cap.
+    const signal = AbortSignal.timeout(PULSE.listTimeoutMs);
+    const res = await fetchImpl(url, { headers: { 'user-agent': USER_AGENT }, signal });
+    if (!res.ok) {
+      await res.body?.cancel().catch(() => undefined);
+      throw new Error(`shard listing HTTP ${res.status}`);
+    }
+    const body = JSON.parse(await readBodyCapped(res, PULSE.maxListBytes, signal)) as { items?: { name?: unknown; updated?: unknown }[]; nextPageToken?: unknown };
     for (const item of body.items ?? []) {
       if (typeof item.name === 'string' && item.name.startsWith(PULSE.prefix) && item.name.endsWith('.json')) {
         objects.push({ name: item.name, updated: typeof item.updated === 'string' ? item.updated : '' });
@@ -549,10 +551,15 @@ export async function aggregateShard(name: string, window: PulseWindow, fetchImp
     headers: { 'user-agent': USER_AGENT },
     signal: AbortSignal.timeout(PULSE.shardTimeoutMs),
   });
-  if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-  const input = Readable.fromWeb(res.body as unknown as NodeReadableStream<Uint8Array>);
-  const lines = createInterface({ input, crlfDelay: Number.POSITIVE_INFINITY });
-  return aggregateLines(lines, window);
+  if (!res.ok || !res.body) {
+    await res.body?.cancel().catch(() => undefined);
+    throw new Error(`HTTP ${res.status}`);
+  }
+  // Bounded streaming: at most 512 MB per shard and 1M chars per line (over-long lines are skipped).
+  const stats = { oversized: 0 };
+  const agg = await aggregateLines(boundedLines(res.body, { maxLineChars: PULSE.maxLineChars, maxBytes: PULSE.maxShardBytes }, stats), window);
+  agg.invalid += stats.oversized;
+  return agg;
 }
 
 export interface PulseRun { pulse: CreativePulse; item: StoredItem }

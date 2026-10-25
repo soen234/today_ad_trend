@@ -2,11 +2,12 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { SourceConfig } from '../src/config.ts';
 import {
-  canonicalizeUrl, capPerSourceDay, cleanSnippet, dedupeItems, entriesToItems, ingestAll, isGlossaryEntry, isPuzzleTitle, itemId, mergeNewItems,
-  normalizeTitle, parseFeed,
+  canonicalizeUrl, capPerSourceDay, cleanSnippet, dedupeItems, entriesToItems, fetchFeedText, ingestAll, isGlossaryEntry, isPuzzleTitle, itemId,
+  mergeNewItems, normalizeTitle, parseFeed,
 } from '../src/ingest.ts';
 import {
-  containsLinkOrMarkup, parseFeedDate, parseHttpUrl, sha1Hex, stripControlChars, stripHtml, stripLinksAndMarkup, truncateToSentence,
+  BodyTooLargeError, boundedLines, containsLinkOrMarkup, parseFeedDate, parseHttpUrl, sha1Hex, stripControlChars, stripHtml, stripLinksAndMarkup,
+  truncateToSentence,
 } from '../src/util.ts';
 import { fixture, makeItem } from './helpers.ts';
 
@@ -371,6 +372,113 @@ describe('per-source daily cap at ingest', () => {
     const items = Array.from({ length: 4 }, (_, i) => makeItem({ source: 'S', publishedAt: `2026-10-24T0${i}:00:00Z`, importance: (i + 1) as 1 | 2 | 3 | 4 }));
     const kept = capPerSourceDay(items, 2, (a, b) => b.importance - a.importance);
     assert.deepEqual(kept.map((i) => i.importance), [3, 4]);
+  });
+});
+
+describe('denial-of-service bounds', () => {
+  const MB = 1024 * 1024;
+
+  /** A body stream that produces `bytes` bytes in 64 KB chunks (no Content-Length). */
+  function bigBody(bytes: number): ReadableStream<Uint8Array> {
+    let sent = 0;
+    return new ReadableStream({
+      pull(controller) {
+        if (sent >= bytes) return controller.close();
+        const chunk = new Uint8Array(Math.min(64 * 1024, bytes - sent)).fill(32);
+        sent += chunk.byteLength;
+        controller.enqueue(chunk);
+      },
+    });
+  }
+
+  it('skips a feed whose streamed body exceeds 5 MB, and keeps the others', async () => {
+    let pulled = 0;
+    const fetchImpl = async (url: string): Promise<Response> => {
+      if (url.includes('huge')) {
+        const body = bigBody(50 * MB);
+        const reader = body.getReader();
+        const counted = new ReadableStream<Uint8Array>({
+          async pull(controller) {
+            const { done, value } = await reader.read();
+            if (done) return controller.close();
+            pulled += value.byteLength;
+            controller.enqueue(value);
+          },
+        });
+        return new Response(counted, { status: 200 });
+      }
+      return new Response(fixture('rss.xml'), { status: 200 });
+    };
+    const huge: SourceConfig = { name: 'Huge', section: 'news', feedUrl: 'https://huge.example.com/feed', homeUrl: 'https://huge.example.com/' };
+    const { reports } = await ingestAll([NEWS, huge], { fetch: fetchImpl, now: NOW });
+    assert.equal(reports[0]?.ok, true);
+    assert.equal(reports[1]?.ok, false);
+    assert.match(reports[1]?.error ?? '', /exceeds 5242880 bytes/);
+    assert.ok(pulled <= 5 * MB + 2 * 64 * 1024, `stopped reading early (read ${pulled} bytes)`);
+  });
+
+  it('rejects an oversized Content-Length before reading the body', async () => {
+    const fetchImpl = async (): Promise<Response> => new Response('<rss/>', { status: 200, headers: { 'content-length': String(6 * MB) } });
+    await assert.rejects(fetchFeedText('https://x.example/feed', fetchImpl), BodyTooLargeError);
+  });
+
+  it('applies the timeout to the body read, not just the headers', async () => {
+    const stalled = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('<rss><channel>'));
+      },
+    });
+    const fetchImpl = async (): Promise<Response> => new Response(stalled, { status: 200 });
+    const started = Date.now();
+    await assert.rejects(fetchFeedText('https://x.example/feed', fetchImpl, { timeoutMs: 100, maxBytes: 5 * MB }), /timeout|aborted/i);
+    assert.ok(Date.now() - started < 2_000);
+  });
+
+  it('caps a feed at 200 items before processing', () => {
+    const items = Array.from({ length: 250 }, (_, i) => `<item><title>Item ${i}</title><link>https://x.example/${i}</link><pubDate>Sun, 25 Oct 2026 10:00:00 +0000</pubDate></item>`).join('');
+    assert.equal(parseFeed(`<rss><channel>${items}</channel></rss>`).length, 200);
+  });
+
+  it('does not expand a billion-laughs DOCTYPE', () => {
+    const entities = ['<!ENTITY lol "lol">'];
+    for (let i = 1; i <= 9; i++) entities.push(`<!ENTITY lol${i} "${`&lol${i === 1 ? '' : i - 1};`.repeat(10)}">`);
+    const xml = `<?xml version="1.0"?><!DOCTYPE lolz [${entities.join('')}]>
+      <rss version="2.0"><channel><item><title>&lol9;</title><link>https://x.example/a</link>
+      <pubDate>Sun, 25 Oct 2026 10:00:00 +0000</pubDate><description>&lol9; &lol9;</description></item></channel></rss>`;
+    const started = Date.now();
+    const entries = parseFeed(xml);
+    assert.ok(Date.now() - started < 1_000);
+    assert.equal(entries.length, 1);
+    assert.ok((entries[0]?.title.length ?? 0) < 20, `title stayed small: ${entries[0]?.title}`);
+    assert.ok(!entries[0]?.snippet.includes('lollol'));
+  });
+
+  it('caps raw field lengths before regex work', () => {
+    const longTitle = 'A'.repeat(50_000);
+    const longText = `${'Sentence one is here. '.repeat(10_000)}`;
+    const xml = `<rss><channel><item><title>${longTitle}</title><link>https://x.example/a</link>
+      <pubDate>Sun, 25 Oct 2026 10:00:00 +0000</pubDate><description>${longText}</description></item></channel></rss>`;
+    const [entry] = parseFeed(xml);
+    assert.ok((entry?.title.length ?? 0) <= 2_000);
+    assert.ok((entry?.snippet.length ?? 0) <= 600);
+  });
+
+  it('splits lines with bounded memory and fails past the byte cap', async () => {
+    const encoder = new TextEncoder();
+    const stream = (text: string): ReadableStream<Uint8Array> => new ReadableStream({
+      start(controller) {
+        for (let i = 0; i < text.length; i += 7) controller.enqueue(encoder.encode(text.slice(i, i + 7)));
+        controller.close();
+      },
+    });
+    const stats = { oversized: 0 };
+    const lines: string[] = [];
+    for await (const line of boundedLines(stream(`short\n${'x'.repeat(100)}\nok line\nlast`), { maxLineChars: 20, maxBytes: 10_000 }, stats)) lines.push(line);
+    assert.deepEqual(lines, ['short', 'ok line', 'last']);
+    assert.equal(stats.oversized, 1);
+    await assert.rejects(async () => {
+      for await (const line of boundedLines(stream('a\n'.repeat(1_000)), { maxLineChars: 20, maxBytes: 100 })) void line;
+    }, BodyTooLargeError);
   });
 });
 
