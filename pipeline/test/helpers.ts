@@ -61,14 +61,26 @@ export function fakeLlm(respond: (body: Record<string, unknown>, call: number) =
     requests.push({ url, body, headers: init?.headers as Record<string, string> });
     const result = respond(body, requests.length);
     if (result instanceof Response) return result;
-    const content = typeof result === 'string' ? result : JSON.stringify(result);
-    return new Response(JSON.stringify({ choices: [{ message: { content } }] }), { status: 200, headers: { 'content-type': 'application/json' } });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    // Anthropic Messages API response shape
+    const message = {
+      id: 'msg_test',
+      type: 'message',
+      role: 'assistant',
+      model: String(body.model),
+      content: [{ type: 'text', text }],
+      stop_reason: 'end_turn',
+      stop_sequence: null,
+      usage: { input_tokens: 1, output_tokens: 1 },
+    };
+    return new Response(JSON.stringify(message), { status: 200, headers: { 'content-type': 'application/json' } });
   };
   const llm = createLlmClient(
     {
-      baseUrl: 'https://llm.test/inference',
-      model: 'test/model',
+      model: 'test-model',
       apiKey: 'test-key',
+      effort: 'low',
+      maxRetries: 0,
       disabled: options.disabled ?? false,
       disabledReason: options.disabled ? 'LLM_DISABLED is set' : undefined,
       minIntervalMs: 4_500,

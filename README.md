@@ -14,7 +14,7 @@ from the Google Ads Transparency Center, a swipe file and a keyword watchlist.
 
 ```
 .github/workflows/pipeline.yml  (03, 09, 15, 21 UTC)
-  RSS ingest → LLM enrichment (GitHub Models) → role editions (21 UTC) → Creative Pulse (weekly)
+  RSS ingest → LLM enrichment (Claude) → role editions (21 UTC) → Creative Pulse (weekly)
   state → orphan `data` branch          output → GitHub Pages: https://soen234.github.io/today_ad_trend/v1/
 ```
 
@@ -36,9 +36,10 @@ The data host is `DATA_BASE_URL` in `lib/config.ts`.
 ## Pipeline operations
 
 - Manual run: Actions → *pipeline* → Run workflow (`force_edition`, `force_pulse`).
-- LLM: GitHub Models through the workflow token (free tier, rate-limited). To use a paid
-  OpenAI-compatible provider, set repository secret `LLM_API_KEY` and update `LLM_BASE_URL` / `LLM_MODEL`
-  in the workflow. If the LLM is unavailable, items fall back to feed snippets and the run still publishes.
+- LLM: Claude via the Anthropic SDK. Add the repository secret `ANTHROPIC_API_KEY` (Settings → Secrets and
+  variables → Actions). Defaults: `claude-opus-5-5` at `low` effort with the server-side refusal fallback;
+  override with repository variables `LLM_MODEL` / `LLM_EFFORT`. Without a key (or if a call fails) items keep
+  feed-snippet summaries and keyword-based role relevance, with no "so what", and the run still publishes.
 - Sources live in `pipeline/src/config.ts`.
 
 ## Release (iOS)

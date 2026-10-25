@@ -53,9 +53,9 @@ GitHub Actions (cron, 4x/day)          GitHub Pages (static JSON, /v1)        Cl
 
 - **No database, no accounts.** State (enriched items, last 30 days) lives in `state/` on an orphan
   `data` branch. Each run checks it out, updates it, commits, and deploys `public/` to Pages.
-- **LLM**: GitHub Models (`openai/gpt-4.1-mini`) through the workflow's `GITHUB_TOKEN`
-  (`permissions: models: read`), via the OpenAI-compatible chat completions API. Base URL, model and
-  key are env-configurable so a paid provider can replace it. If the LLM call fails, the item keeps a
+- **LLM**: Claude through the Anthropic SDK (`claude-opus-5-5`, low effort, server-side refusal fallback),
+  keyed by the `ANTHROPIC_API_KEY` repository secret; model/effort overridable via repository variables.
+  (GitHub Models was the original plan but has been retired.) If the LLM call fails, the item keeps a
   feed-snippet summary and rule-based classification; the run never fails because of the LLM.
 - **Schedule**: runs at 03:00, 09:00, 15:00, 21:00 UTC. Every run ingests and enriches. The 21:00 run
   builds the edition dated (now + 3h) UTC, i.e. the next calendar day — ready before 08:00 in Asia and

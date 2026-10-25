@@ -121,13 +121,13 @@ export const ENRICH = {
 } as const;
 
 export const LLM_DEFAULTS = {
-  baseUrl: 'https://models.github.ai/inference',
-  model: 'openai/gpt-4.1-mini',
-  /** Free tier: 15 requests/min. */
-  minIntervalMs: 4_500,
-  timeoutMs: 60_000,
-  temperature: 0.2,
-  maxTokens: 4_000,
+  // Claude Opus 5.5 at low effort: short classification/summarization calls. Override with LLM_MODEL / LLM_EFFORT.
+  model: 'claude-opus-5-5',
+  effort: 'low' as const,
+  minIntervalMs: 1_000,
+  timeoutMs: 120_000,
+  maxRetries: 2,
+  maxTokens: 16_000,
 } as const;
 
 export const EDITION = {

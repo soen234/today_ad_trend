@@ -15,7 +15,7 @@
 
 ```
 pipeline/ (GitHub Actions cron, 하루 4회)  ──►  GitHub Pages /v1/*.json  ──►  Expo 앱, todayadtrend.com
-  RSS 수집 → LLM 보강(GitHub Models) → 에디션 생성 → Creative Pulse(주간)      (정적 JSON, DB/계정 없음)
+  RSS 수집 → LLM 보강(Claude, ANTHROPIC_API_KEY 시크릿) → 에디션 생성 → Creative Pulse(주간)      (정적 JSON, DB/계정 없음)
   상태는 orphan `data` 브랜치에 커밋
 ```
 

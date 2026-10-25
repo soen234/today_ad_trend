@@ -16,7 +16,6 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-      models: read # GitHub Models via the workflow token
     steps:
       - name: Check out repository
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -40,9 +39,9 @@ jobs:
 
       - name: Run pipeline once (no deploy)
         env:
-          LLM_BASE_URL: https://models.github.ai/inference
-          LLM_MODEL: openai/gpt-4.1-mini
-          LLM_API_KEY: ${{ github.token }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          LLM_EFFORT: ${{ vars.LLM_EFFORT }}
         run: >-
           node pipeline/src/main.ts --state-dir "$RUNNER_TEMP/state" --out-dir "$RUNNER_TEMP/public"
           --force-edition --force-pulse --pulse-shards 6

@@ -1,6 +1,6 @@
 name: Data pipeline
 
-# Ingests feeds, enriches them with GitHub Models, builds the role editions (21:00 UTC) and the
+# Ingests feeds, enriches them with Claude (ANTHROPIC_API_KEY secret; keyword fallback without it), builds the role editions (21:00 UTC) and the
 # weekly Creative Pulse, keeps state on the orphan `data` branch and deploys /v1 JSON to Pages.
 on:
   schedule:
@@ -30,7 +30,6 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write # push the `data` branch (only the push step uses the token)
-      models: read # GitHub Models via the workflow token
     steps:
       - name: Check out repository
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -65,12 +64,12 @@ jobs:
           fi
           mkdir -p data-branch/state
 
-      # The LLM key is only exposed to this step.
+      # The API key is only exposed to this step. Without it the pipeline uses the keyword fallback.
       - name: Run pipeline
         env:
-          LLM_BASE_URL: https://models.github.ai/inference
-          LLM_MODEL: openai/gpt-4.1-mini
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY || github.token }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          LLM_EFFORT: ${{ vars.LLM_EFFORT }}
           FORCE_EDITION: ${{ inputs.force_edition }}
           FORCE_PULSE: ${{ inputs.force_pulse }}
         run: |

@@ -2,7 +2,7 @@
 //
 //   node src/main.ts --state-dir <dir> --out-dir <dir> [--force-edition] [--force-pulse] [--now <ISO>] [--pulse-shards <n>]
 //
-// Env: LLM_BASE_URL, LLM_MODEL, LLM_API_KEY, LLM_DISABLED=1 (no LLM calls; fallbacks only).
+// Env: ANTHROPIC_API_KEY, LLM_MODEL, LLM_EFFORT, LLM_DISABLED=1 (no LLM calls; fallbacks only).
 import { realpathSync } from 'node:fs';
 import { appendFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
