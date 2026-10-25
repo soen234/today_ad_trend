@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 import { CheckCircle2, Lightbulb } from 'lucide-react-native';
-import { ItemActions } from '@/components/items/ItemActions';
+import { ItemActions, useItemA11yActions } from '@/components/items/ItemActions';
 import { ItemMeta } from '@/components/items/ItemMeta';
 import { COLORS } from '@/lib/config';
 import type { Item, Role } from '@/types';
@@ -15,12 +15,15 @@ interface BriefCardProps {
 
 export const BriefCard = ({ item, index, role, read, onOpen }: BriefCardProps) => {
   const soWhat = item.roles[role]?.soWhat;
+  const a11y = useItemA11yActions(item);
 
   return (
     <Pressable
       onPress={() => onOpen(item)}
       accessibilityRole="link"
       accessibilityHint="Opens the original article"
+      accessibilityActions={a11y.accessibilityActions}
+      onAccessibilityAction={a11y.onAccessibilityAction}
       className={`bg-white dark:bg-ink-800 rounded-2xl p-4 mb-3 border ${
         read ? 'border-gray-100 dark:border-ink-700' : 'border-gray-200 dark:border-ink-600'
       }`}

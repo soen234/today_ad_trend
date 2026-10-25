@@ -12,15 +12,27 @@ import { openUrl } from '@/lib/open';
 import { usePrefs, type BriefTime } from '@/stores/prefsStore';
 import type { Role } from '@/types';
 
-const Group = ({ title, children }: { title: string; children: ReactNode }) => (
+interface GroupProps {
+  title: string;
+  children: ReactNode;
+}
+
+const Group = ({ title, children }: GroupProps) => (
   <View className="mb-6">
     <Text className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2 px-1">{title}</Text>
     {children}
   </View>
 );
 
-const LinkRow = ({ icon, label, detail, onPress }: { icon: ReactNode; label: string; detail?: string; onPress: () => void }) => (
-  <Pressable onPress={onPress} className="flex-row items-center px-4 py-3.5 border-b border-gray-100 dark:border-ink-700">
+interface LinkRowProps {
+  icon: ReactNode;
+  label: string;
+  detail?: string;
+  onPress: () => void;
+}
+
+const LinkRow = ({ icon, label, detail, onPress }: LinkRowProps) => (
+  <Pressable onPress={onPress} accessibilityRole="button" className="flex-row items-center px-4 py-3.5 border-b border-gray-100 dark:border-ink-700">
     {icon}
     <View className="flex-1 ml-3">
       <Text className="text-base text-gray-900 dark:text-white">{label}</Text>
@@ -114,6 +126,7 @@ export default function SettingsScreen() {
                   <Pressable
                     key={s.url}
                     onPress={() => openUrl(s.url).catch(() => undefined)}
+                    accessibilityRole="link"
                     className="flex-row items-center px-4 py-2.5 border-b border-gray-100 dark:border-ink-700"
                   >
                     <View className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: sectionMeta(s.section).color }} />
@@ -122,13 +135,17 @@ export default function SettingsScreen() {
                   </Pressable>
                 ))
               : null}
-            <LinkRow icon={<Globe size={20} color={COLORS.signal} />} label="Website" detail="todayadtrend.com" onPress={() => openUrl(WEBSITE_URL)} />
-            <LinkRow icon={<Shield size={20} color={COLORS.violet} />} label="Privacy policy" onPress={() => openUrl(PRIVACY_URL)} />
+            <LinkRow icon={<Globe size={20} color={COLORS.signal} />} label="Website" detail="todayadtrend.com" onPress={() => openUrl(WEBSITE_URL).catch(() => undefined)} />
+            <LinkRow icon={<Shield size={20} color={COLORS.violet} />} label="Privacy policy" onPress={() => openUrl(PRIVACY_URL).catch(() => undefined)} />
             <LinkRow
               icon={<Mail size={20} color={COLORS.amber} />}
               label="Send feedback"
               detail={CONTACT_EMAIL}
-              onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('[Today Ad Trend] Feedback')}`)}
+              onPress={() =>
+                Linking.openURL(`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('[Today Ad Trend] Feedback')}`).catch(() =>
+                  Alert.alert('Send feedback', `Email us at ${CONTACT_EMAIL}`)
+                )
+              }
             />
           </View>
         </Group>

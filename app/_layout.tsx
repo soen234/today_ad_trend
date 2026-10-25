@@ -9,8 +9,8 @@ import '../global.css';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { initAds } from '@/lib/admob';
-import { configureNotifications } from '@/lib/notifications';
-import { QueryProvider } from '@/providers/QueryProvider';
+import { configureNotifications, onBriefNotificationOpened } from '@/lib/notifications';
+import { QueryProvider, queryClient } from '@/providers/QueryProvider';
 import { usePrefs } from '@/stores/prefsStore';
 
 export { ErrorBoundary } from 'expo-router';
@@ -22,12 +22,19 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 // AsyncStorage에서 설정을 다 읽어온 뒤에야 온보딩 여부를 판단할 수 있다
+// 저장소 읽기가 실패하면 persist가 완료 신호를 주지 않으므로, 기본값으로라도 앱이 뜨도록 시간 제한을 둔다
+const HYDRATION_TIMEOUT_MS = 3000;
+
 const useHydrated = () => {
   const [hydrated, setHydrated] = useState(usePrefs.persist.hasHydrated());
   useEffect(() => {
     const unsub = usePrefs.persist.onFinishHydration(() => setHydrated(true));
     setHydrated(usePrefs.persist.hasHydrated());
-    return unsub;
+    const timer = setTimeout(() => setHydrated(true), HYDRATION_TIMEOUT_MS);
+    return () => {
+      unsub();
+      clearTimeout(timer);
+    };
   }, []);
   return hydrated;
 };
@@ -39,6 +46,10 @@ export default function RootLayout() {
   useEffect(() => {
     configureNotifications().catch(() => undefined);
     initAds().catch(() => undefined);
+    // 아침 알림을 탭해서 들어오면 최신 브리핑을 바로 다시 받는다
+    return onBriefNotificationOpened(() => {
+      queryClient.invalidateQueries({ queryKey: ['latest'] }).catch(() => undefined);
+    });
   }, []);
 
   useEffect(() => {

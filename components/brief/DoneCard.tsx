@@ -25,7 +25,7 @@ export const DoneCard = ({ streak, nextBriefLabel, onExplore }: DoneCardProps) =
           {streak} day{streak === 1 ? '' : 's'} streak
         </Text>
       </View>
-      <Pressable onPress={onExplore} className="px-4 py-2 rounded-full bg-signal">
+      <Pressable onPress={onExplore} accessibilityRole="button" className="px-4 py-2 rounded-full bg-signal">
         <Text className="text-sm font-semibold text-white">Explore more</Text>
       </Pressable>
     </View>

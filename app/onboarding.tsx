@@ -51,7 +51,7 @@ export default function OnboardingScreen() {
   return (
     <View className="flex-1 bg-[#F5F7FA] dark:bg-ink-950" style={{ paddingTop: insets.top, paddingBottom: insets.bottom + 12 }}>
       <ScrollView contentContainerStyle={{ padding: 24, flexGrow: 1 }}>
-        <View className="flex-row mb-6" style={{ gap: 6 }}>
+        <View className="flex-row mb-6 gap-1.5">
           {[0, 1, 2].map((i) => (
             <View key={i} className={`h-1 flex-1 rounded-full ${i <= step ? 'bg-signal' : 'bg-gray-200 dark:bg-ink-700'}`} />
           ))}
@@ -64,7 +64,7 @@ export default function OnboardingScreen() {
               What changed in advertising today.
             </Text>
             <Text className="text-lg leading-7 text-gray-600 dark:text-gray-300 mt-2">And what it means for you.</Text>
-            <View className="mt-8" style={{ gap: 18 }}>
+            <View className="mt-8 gap-[18px]">
               {VALUE_POINTS.map(({ icon: Icon, color, title, body }) => (
                 <View key={title} className="flex-row">
                   <View className="w-10 h-10 rounded-xl items-center justify-center" style={{ backgroundColor: `${color}1F` }}>
@@ -114,11 +114,11 @@ export default function OnboardingScreen() {
           <Text className="text-base font-bold text-white">{primary.label}</Text>
         </Pressable>
         {step === 2 ? (
-          <Pressable onPress={() => finish(false)} disabled={busy} className="h-12 items-center justify-center mt-1">
+          <Pressable onPress={() => finish(false)} disabled={busy} accessibilityRole="button" className="h-12 items-center justify-center mt-1">
             <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400">Not now</Text>
           </Pressable>
         ) : step > 0 ? (
-          <Pressable onPress={() => setStep(step - 1)} className="h-12 items-center justify-center mt-1">
+          <Pressable onPress={() => setStep(step - 1)} accessibilityRole="button" className="h-12 items-center justify-center mt-1">
             <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400">Back</Text>
           </Pressable>
         ) : null}

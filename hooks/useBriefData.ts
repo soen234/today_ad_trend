@@ -1,6 +1,13 @@
+import { useMemo } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { fetchEdition, fetchFeed, fetchLatest, fetchPulse } from '@/lib/api';
+import { DataError, fetchEdition, fetchFeed, fetchLatest, fetchPulse } from '@/lib/api';
 import type { Item, Role, Section } from '@/types';
+
+// refetch()는 enabled:false를 무시하므로, 경로가 없을 때는 명확한 에러를 던진다
+const requirePath = (path: string | null): string => {
+  if (!path) throw new DataError('Not published yet', 404);
+  return path;
+};
 
 export const useLatest = () =>
   useQuery({
@@ -13,10 +20,8 @@ export const useEdition = (role: Role) => {
   const path = latest.data?.editions[role] ?? null;
   const edition = useQuery({
     queryKey: ['edition', path],
-    queryFn: () => fetchEdition(path as string),
+    queryFn: () => fetchEdition(requirePath(path)),
     enabled: path !== null,
-    // 에디션 파일은 날짜별로 한 번 만들어지고 바뀌지 않는다
-    staleTime: Infinity,
   });
   return { latest, edition, hasEdition: path !== null };
 };
@@ -26,20 +31,22 @@ export const useFeed = (section: Exclude<Section, 'creative'>) => {
   const path = latest.data?.feeds[section] ?? null;
   const feed = useQuery({
     queryKey: ['feed', path],
-    queryFn: () => fetchFeed(path as string),
+    queryFn: () => fetchFeed(requirePath(path)),
     enabled: path !== null,
   });
-  return { latest, feed };
+  return { latest, feed, hasFeed: path !== null };
 };
 
 export const usePulse = () => {
   const latest = useLatest();
   const path = latest.data?.pulse ?? null;
+  // pulse는 항상 같은 경로(pulse/latest.json)로 갱신되므로 latest의 generatedAt을 키에 넣는다
+  const version = latest.data?.generatedAt ?? null;
   const pulse = useQuery({
-    queryKey: ['pulse', path],
-    queryFn: () => fetchPulse(path as string),
+    queryKey: ['pulse', path, version],
+    queryFn: () => fetchPulse(requirePath(path)),
     enabled: path !== null,
-    staleTime: Infinity,
+    placeholderData: (prev) => prev,
   });
   return { latest, pulse, hasPulse: path !== null };
 };
@@ -54,18 +61,21 @@ export const useAllFeedItems = () => {
       const path = latest.data?.feeds[section] ?? null;
       return {
         queryKey: ['feed', path],
-        queryFn: () => fetchFeed(path as string),
+        queryFn: () => fetchFeed(requirePath(path)),
         enabled: path !== null,
       };
     }),
   });
-  const items: Item[] = results
-    .flatMap((r) => r.data?.items ?? [])
-    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  const [news, platform, expert] = results.map((r) => r.data);
+  const items: Item[] = useMemo(
+    () =>
+      [news, platform, expert]
+        .flatMap((f) => f?.items ?? [])
+        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)),
+    [news, platform, expert]
+  );
   return {
     items,
-    isLoading: latest.isLoading || results.some((r) => r.isLoading),
-    isError: latest.isError || results.some((r) => r.isError),
-    refetch: () => Promise.all([latest.refetch(), ...results.map((r) => r.refetch())]),
+    isPending: latest.isPending || results.some((r) => r.isPending && r.fetchStatus !== 'idle'),
   };
 };

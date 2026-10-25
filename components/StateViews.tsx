@@ -12,7 +12,11 @@ export const SkeletonCard = () => (
   </View>
 );
 
-export const SkeletonList = ({ count = 3 }: { count?: number }) => (
+interface SkeletonListProps {
+  count?: number;
+}
+
+export const SkeletonList = ({ count = 3 }: SkeletonListProps) => (
   <View>
     {Array.from({ length: count }, (_, i) => (
       <SkeletonCard key={i} />
@@ -34,14 +38,18 @@ export const MessageState = ({ title, body, actionLabel, onAction, icon }: Messa
     <Text className="text-base font-semibold text-gray-900 dark:text-white mt-4 text-center">{title}</Text>
     {body ? <Text className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center leading-5">{body}</Text> : null}
     {actionLabel && onAction ? (
-      <Pressable onPress={onAction} className="mt-5 px-5 py-2.5 rounded-full bg-ink dark:bg-white">
+      <Pressable onPress={onAction} accessibilityRole="button" className="mt-5 px-5 py-2.5 rounded-full bg-ink dark:bg-white">
         <Text className="text-sm font-semibold text-white dark:text-ink">{actionLabel}</Text>
       </Pressable>
     ) : null}
   </View>
 );
 
-export const OfflineState = ({ onRetry }: { onRetry: () => void }) => (
+interface OfflineStateProps {
+  onRetry: () => void;
+}
+
+export const OfflineState = ({ onRetry }: OfflineStateProps) => (
   <MessageState
     icon={<CloudOff size={40} color={COLORS.muted} />}
     title="Can't reach the brief right now"

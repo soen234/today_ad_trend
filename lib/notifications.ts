@@ -53,6 +53,12 @@ export const scheduleDailyBrief = async (hour: number, minute: number, role: Rol
   });
 };
 
+export const onBriefNotificationOpened = (handler: () => void): (() => void) => {
+  if (!supported) return () => undefined;
+  const sub = Notifications.addNotificationResponseReceivedListener(handler);
+  return () => sub.remove();
+};
+
 export const cancelDailyBrief = async (): Promise<void> => {
   if (!supported) return;
   await Notifications.cancelScheduledNotificationAsync(BRIEF_ID).catch(() => undefined);

@@ -19,7 +19,7 @@ interface TimeChipsProps {
 }
 
 export const TimeChips = ({ value, onChange }: TimeChipsProps) => (
-  <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+  <View className="flex-row flex-wrap gap-2">
     {TIME_OPTIONS.map((t) => {
       const active = t.hour === value.hour && t.minute === value.minute;
       return (

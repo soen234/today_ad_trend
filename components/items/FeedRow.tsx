@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Eye } from 'lucide-react-native';
-import { ItemActions } from '@/components/items/ItemActions';
+import { ItemActions, useItemA11yActions } from '@/components/items/ItemActions';
 import { ItemMeta } from '@/components/items/ItemMeta';
 import { COLORS } from '@/lib/config';
 import { openUrl } from '@/lib/open';
@@ -17,11 +17,14 @@ interface FeedRowProps {
 const FeedRowBase = ({ item, role, watchMatches = [], showSection = false }: FeedRowProps) => {
   const take = item.roles[role];
   const showTake = take && take.relevance >= 2 && take.soWhat;
+  const a11y = useItemA11yActions(item);
 
   return (
     <Pressable
       onPress={() => openUrl(item.url).catch(() => undefined)}
       accessibilityRole="link"
+      accessibilityActions={a11y.accessibilityActions}
+      onAccessibilityAction={a11y.onAccessibilityAction}
       className="bg-white dark:bg-ink-800 rounded-2xl p-4 mb-3 border border-gray-100 dark:border-ink-700"
       style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
     >

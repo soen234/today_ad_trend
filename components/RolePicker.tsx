@@ -9,7 +9,7 @@ interface RolePickerProps {
 }
 
 export const RolePicker = ({ value, onChange }: RolePickerProps) => (
-  <View style={{ gap: 10 }}>
+  <View className="gap-2.5">
     {ROLES.map((r) => {
       const active = r.key === value;
       return (

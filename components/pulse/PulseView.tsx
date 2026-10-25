@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ExternalLink, Info } from 'lucide-react-native';
 import { COLORS } from '@/lib/config';
@@ -16,14 +17,24 @@ const formatDay = (date: string) => {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+interface PulseSectionProps {
+  title: string;
+  children: ReactNode;
+}
+
+const PulseSection = ({ title, children }: PulseSectionProps) => (
   <View className="bg-white dark:bg-ink-800 rounded-2xl p-4 mb-3 border border-gray-100 dark:border-ink-700">
     <Text className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">{title}</Text>
     {children}
   </View>
 );
 
-const StatBar = ({ stat, color }: { stat: PulseStat; color: string }) => (
+interface StatBarProps {
+  stat: PulseStat;
+  color: string;
+}
+
+const StatBar = ({ stat, color }: StatBarProps) => (
   <View className="mb-3">
     <View className="flex-row justify-between mb-1">
       <Text className="text-sm font-medium text-gray-900 dark:text-white">{stat.label}</Text>
@@ -56,27 +67,28 @@ export const PulseView = ({ pulse }: PulseViewProps) => (
     </View>
 
     {pulse.formatMix.length > 0 ? (
-      <Section title="Format mix of new creatives (vs. prior week)">
+      <PulseSection title="Format mix of new creatives (vs. prior week)">
         {pulse.formatMix.map((s) => (
           <StatBar key={s.label} stat={s} color={COLORS.rose} />
         ))}
-      </Section>
+      </PulseSection>
     ) : null}
 
     {pulse.audienceSignals.length > 0 ? (
-      <Section title="Audience targeting used by new creatives">
+      <PulseSection title="Audience targeting used by new creatives">
         {pulse.audienceSignals.map((s) => (
           <StatBar key={s.label} stat={s} color={COLORS.violet} />
         ))}
-      </Section>
+      </PulseSection>
     ) : null}
 
     {pulse.topLaunchers.length > 0 ? (
-      <Section title="Most new creatives launched (sample)">
+      <PulseSection title="Most new creatives launched (sample)">
         {pulse.topLaunchers.map((l, i) => (
           <Pressable
             key={`${l.advertiser}-${i}`}
             onPress={() => openUrl(l.exampleUrl).catch(() => undefined)}
+            accessibilityRole="link"
             className="flex-row items-center justify-between py-2 border-b border-gray-100 dark:border-ink-700"
           >
             <Text className="text-sm text-gray-900 dark:text-white flex-1 pr-3" numberOfLines={1}>
@@ -86,15 +98,16 @@ export const PulseView = ({ pulse }: PulseViewProps) => (
             <ExternalLink size={14} color={COLORS.muted} />
           </Pressable>
         ))}
-      </Section>
+      </PulseSection>
     ) : null}
 
     {pulse.longRunners.length > 0 ? (
-      <Section title="Long runners: live 90+ days and still showing">
+      <PulseSection title="Long runners: live 90+ days and still showing">
         {pulse.longRunners.map((r, i) => (
           <Pressable
             key={`${r.url}-${i}`}
             onPress={() => openUrl(r.url).catch(() => undefined)}
+            accessibilityRole="link"
             className="flex-row items-center justify-between py-2 border-b border-gray-100 dark:border-ink-700"
           >
             <View className="flex-1 pr-3">
@@ -108,7 +121,7 @@ export const PulseView = ({ pulse }: PulseViewProps) => (
             <ExternalLink size={14} color={COLORS.muted} />
           </Pressable>
         ))}
-      </Section>
+      </PulseSection>
     ) : null}
 
     <View className="flex-row px-1 mb-4">
