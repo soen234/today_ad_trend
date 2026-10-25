@@ -1,0 +1,119 @@
+name: Data pipeline
+
+# Ingests feeds, enriches them with Claude (ANTHROPIC_API_KEY secret; keyword fallback without it), builds the role editions (21:00 UTC) and the
+# weekly Creative Pulse, keeps state on the orphan `data` branch and deploys /v1 JSON to Pages.
+on:
+  schedule:
+    - cron: '0 3,9,15,21 * * *'
+  workflow_dispatch:
+    inputs:
+      force_edition:
+        description: Build the edition for the target date now
+        type: boolean
+        default: false
+      force_pulse:
+        description: Rebuild the Creative Pulse now
+        type: boolean
+        default: false
+
+# Least privilege: nothing by default, each job asks only for what it needs.
+permissions: {}
+
+# Never run two pipelines at once (state on `data` would race); queue instead of cancelling.
+concurrency:
+  group: tat-pipeline
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write # push the `data` branch (only the push step uses the token)
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node 24
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: pipeline/package-lock.json
+
+      - name: Install pipeline dependencies
+        working-directory: pipeline
+        run: npm ci --omit=dev --ignore-scripts
+
+      - name: Unit tests
+        working-directory: pipeline
+        run: npm test
+
+      # The repository is public, so reading the data branch needs no credentials.
+      - name: Check out state from the data branch
+        run: |
+          if git ls-remote --exit-code --heads origin data > /dev/null 2>&1; then
+            git fetch --depth=1 origin data:refs/remotes/origin/data
+            git worktree add -B data data-branch origin/data
+          else
+            echo "No data branch yet; creating an orphan one"
+            git worktree add --detach data-branch
+            git -C data-branch switch --orphan data
+          fi
+          mkdir -p data-branch/state
+
+      # The API key is only exposed to this step. Without it the pipeline uses the keyword fallback.
+      - name: Run pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          LLM_EFFORT: ${{ vars.LLM_EFFORT }}
+          FORCE_EDITION: ${{ inputs.force_edition }}
+          FORCE_PULSE: ${{ inputs.force_pulse }}
+        run: |
+          args=(--state-dir ./data-branch/state --out-dir ./public)
+          if [ "$FORCE_EDITION" = "true" ]; then args+=(--force-edition); fi
+          if [ "$FORCE_PULSE" = "true" ]; then args+=(--force-pulse); fi
+          node pipeline/src/main.ts "${args[@]}"
+
+      # The only step that sees the write token. It is passed in the push URL, never echoed
+      # (the runner masks it in logs) and never written to git config.
+      - name: Commit and push state to the data branch
+        working-directory: data-branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A state
+          if git diff --cached --quiet; then
+            echo "State unchanged"
+            exit 0
+          fi
+          git commit -m "chore(data): pipeline state $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/data
+
+      - name: Add Pages extras
+        run: cp pipeline/pages/index.html public/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

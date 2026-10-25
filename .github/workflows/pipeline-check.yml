@@ -1,0 +1,54 @@
+name: Pipeline check
+
+# PR 검증 전용: 테스트 + 실제 피드/LLM으로 한 번 돌려 결과를 아티팩트로 남긴다.
+# 배포하지 않고, data 브랜치에 쓰지 않는다.
+on:
+  pull_request:
+    paths:
+      - 'pipeline/**'
+      - '.github/workflows/pipeline*.yml'
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node 24
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: pipeline/package-lock.json
+
+      - name: Install pipeline dependencies
+        working-directory: pipeline
+        run: npm ci --omit=dev --ignore-scripts
+
+      - name: Unit tests
+        working-directory: pipeline
+        run: npm test
+
+      - name: Run pipeline once (no deploy)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          LLM_EFFORT: ${{ vars.LLM_EFFORT }}
+        run: >-
+          node pipeline/src/main.ts --state-dir "$RUNNER_TEMP/state" --out-dir "$RUNNER_TEMP/public"
+          --force-edition --force-pulse --pulse-shards 6
+
+      - name: Upload output for review
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pipeline-output
+          path: ${{ runner.temp }}/public
+          retention-days: 7

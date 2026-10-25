@@ -1,0 +1,24 @@
+{
+  "name": "tat-pipeline",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Today Ad Trend data pipeline: ingests feeds, enriches with an LLM, builds role editions and the Creative Pulse, publishes static /v1 JSON.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "test": "node --test",
+    "dry-run": "LLM_DISABLED=1 node src/main.ts --state-dir .dry-run/state --out-dir .dry-run/public --force-edition --force-pulse",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
+    "fast-xml-parser": "^5.11.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^5.9.3"
+  }
+}

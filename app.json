@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "TAT",
+    "name": "Today Ad Trend",
     "slug": "ad-trend-temp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,32 +11,33 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0a1929"
+      "backgroundColor": "#0B1B2B"
     },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.elehedge.tat",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSUserTrackingUsageDescription": "This app uses tracking to show you personalized ads that match your interests."
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0a1929"
+        "backgroundColor": "#0B1B2B"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.elehedge.tat",
       "permissions": [
-        "com.google.android.gms.permission.AD_ID",
+        "com.google.android.gms.permission.AD_ID"
+      ],
+      "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO",
-        "android.permission.READ_MEDIA_AUDIO"
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
       ]
     },
     "web": {
@@ -46,6 +47,7 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/withoutPushEntitlement",
       [
         "react-native-google-mobile-ads",
         {
@@ -53,12 +55,11 @@
           "iosAppId": "ca-app-pub-8143178103770527~2055004965"
         }
       ],
-      "expo-tracking-transparency",
       [
-        "expo-media-library",
+        "expo-notifications",
         {
-          "photosPermission": "Allow TAT to save ad screenshots to your photo library.",
-          "savePhotosPermission": "Allow TAT to save ad screenshots to your photo library."
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#12B76A"
         }
       ]
     ],
