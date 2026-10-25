@@ -105,13 +105,27 @@ export function createLlmClient(config: LlmConfig, deps: LlmDeps = {}): LlmClien
           warn('llm', `${label}: HTTP ${res.status} ${body}`);
           return null;
         }
-        const data: unknown = await res.json();
-        const content = (data as { choices?: { message?: { content?: unknown } }[] })?.choices?.[0]?.message?.content;
-        if (typeof content !== 'string') {
-          warn('llm', `${label}: response has no message content`);
+        // 실패 원인을 구분해서 남긴다: HTTP 본문이 JSON이 아닌지, 모델 답변이 JSON이 아닌지
+        const raw = await res.text();
+        let data: unknown;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          const type = res.headers.get('content-type') ?? 'unknown';
+          warn('llm', `${label}: HTTP ${res.status} body is not JSON (content-type ${type}): ${collapse(raw.slice(0, 160))}`);
           return null;
         }
-        return JSON.parse(stripCodeFence(content)) as unknown;
+        const content = (data as { choices?: { message?: { content?: unknown } }[] })?.choices?.[0]?.message?.content;
+        if (typeof content !== 'string') {
+          warn('llm', `${label}: response has no message content: ${collapse(raw.slice(0, 160))}`);
+          return null;
+        }
+        try {
+          return JSON.parse(stripCodeFence(content)) as unknown;
+        } catch {
+          warn('llm', `${label}: model reply is not JSON: ${collapse(content.slice(0, 160))}`);
+          return null;
+        }
       } catch (err) {
         warn('llm', `${label}: invalid response: ${errorMessage(err)}`);
         return null;
