@@ -1,5 +1,6 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bookmark, Eye, Plus, X } from 'lucide-react-native';
 import { FeedRow } from '@/components/items/FeedRow';
@@ -152,7 +153,11 @@ const WatchlistView = () => {
 
 export default function SavedScreen() {
   const insets = useSafeAreaInsets();
-  const [tab, setTab] = useState<Tab>('saved');
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const [tab, setTab] = useState<Tab>(params.tab === 'watchlist' ? 'watchlist' : 'saved');
+  useEffect(() => {
+    if (params.tab === 'watchlist' || params.tab === 'saved') setTab(params.tab);
+  }, [params.tab]);
 
   return (
     <View className="flex-1 bg-[#F5F7FA] dark:bg-ink-950" style={{ paddingTop: insets.top }}>

@@ -45,9 +45,14 @@ export default function TodayScreen() {
   const onOpen = useCallback(
     (item: Item) => {
       if (data) markRead(data.date, item.id);
+      // Creative Pulse 요약 아이템은 웹 대신 앱 안의 Pulse 탭으로 연다
+      if (item.section === 'creative') {
+        router.navigate('/explore?section=creative');
+        return;
+      }
       openUrl(item.url).catch(() => undefined);
     },
-    [data, markRead]
+    [data, markRead, router]
   );
 
   const onRefresh = async () => {

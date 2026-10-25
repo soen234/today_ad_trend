@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsRestoring } from '@tanstack/react-query';
 import { InFeedAd } from '@/components/ads/InFeedAd';
@@ -108,9 +109,16 @@ const PulseTab = () => {
   );
 };
 
+const isSection = (v: unknown): v is Section => SECTIONS.some((s) => s.key === v);
+
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
-  const [section, setSection] = useState<Section>('news');
+  // /explore?section=creative 같은 딥링크로 특정 섹션을 열 수 있다
+  const params = useLocalSearchParams<{ section?: string }>();
+  const [section, setSection] = useState<Section>(isSection(params.section) ? params.section : 'news');
+  useEffect(() => {
+    if (isSection(params.section)) setSection(params.section);
+  }, [params.section]);
 
   return (
     <View className="flex-1 bg-[#F5F7FA] dark:bg-ink-950" style={{ paddingTop: insets.top }}>
