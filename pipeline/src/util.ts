@@ -1,0 +1,355 @@
+import { createHash } from 'node:crypto';
+
+export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
+
+export function sha1Hex(text: string): string {
+  return createHash('sha1').update(text).digest('hex');
+}
+
+// ---------------------------------------------------------------------------
+// URLs
+
+/**
+ * Security rule: every URL we publish must be an absolute http: or https: URL. Feed links are
+ * third-party input, so `javascript:`, `data:`, other app schemes and relative links are rejected.
+ * Returns the parsed URL, or null when the value fails the rule.
+ */
+export function parseHttpUrl(value: unknown): URL | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  let url: URL;
+  try {
+    url = new URL(trimmed); // no base: relative URLs throw
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+  if (!url.hostname) return null;
+  return url;
+}
+
+export function isHttpUrl(value: unknown): value is string {
+  return parseHttpUrl(value) !== null;
+}
+
+// ---------------------------------------------------------------------------
+// Untrusted text (feed text going into prompts, LLM text coming out)
+
+// C0/C1 controls, zero-width characters, bidi overrides/isolates and the BOM.
+const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁤⁦-⁩﻿]/g;
+
+/** Replaces control/invisible characters with spaces and collapses whitespace. */
+export function stripControlChars(text: string): string {
+  return collapseWhitespace(text.replace(CONTROL_CHARS, ' '));
+}
+
+/** Untrusted text prepared for a prompt: no control characters, length-capped. */
+export function promptText(text: string, max: number): string {
+  return truncate(stripControlChars(text), max);
+}
+
+const LINK_OR_MARKUP: readonly RegExp[] = [
+  /\b[a-z][a-z0-9+.-]*:\/\//i, // any scheme URL: https://, ftp://, myapp://
+  /\b(?:javascript|vbscript|data|mailto|file|intent|tel|sms):[^\s]/i, // scheme without "//"
+  /\bwww\.[a-z0-9-]+\.[a-z]/i, // www.example.com
+  /<\/?[a-z!][^>]*>/i, // HTML tags and comments
+  /\[[^\]]*\]\([^)]*\)/, // markdown link or image: [text](url)
+];
+
+/** True when text contains a URL, HTML or a markdown link (never allowed in generated text). */
+export function containsLinkOrMarkup(text: string): boolean {
+  return LINK_OR_MARKUP.some((pattern) => pattern.test(text));
+}
+
+/** Removes markdown links (keeping their text), HTML tags and URLs from third-party text. */
+export function stripLinksAndMarkup(text: string): string {
+  return collapseWhitespace(
+    text
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/<\/?[a-z!][^>]*>/gi, ' ')
+      .replace(/\b[a-z][a-z0-9+.-]*:\/\/\S+/gi, ' ')
+      .replace(/\b(?:javascript|vbscript|data|mailto|file|intent|tel|sms):\S+/gi, ' ')
+      .replace(/\bwww\.[a-z0-9-]+\.\S+/gi, ' '),
+  ).replace(/\s+([.,;:!?)\]])/g, '$1');
+}
+
+// ---------------------------------------------------------------------------
+// Text
+
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', hellip: '…', mdash: '—', ndash: '–',
+  lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”', sbquo: '‚', bdquo: '„', laquo: '«', raquo: '»',
+  trade: '™', reg: '®', copy: '©', bull: '•', middot: '·', deg: '°', euro: '€', pound: '£', yen: '¥',
+  cent: '¢', times: '×', divide: '÷', eacute: 'é', egrave: 'è', aacute: 'á', agrave: 'à', iacute: 'í',
+  oacute: 'ó', uacute: 'ú', ntilde: 'ñ', ccedil: 'ç', ouml: 'ö', uuml: 'ü', auml: 'ä', szlig: 'ß',
+  thinsp: ' ', ensp: ' ', emsp: ' ', zwj: '', zwnj: '', shy: '',
+};
+
+export function decodeEntities(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z][a-z0-9]*);/gi, (match, body: string) => {
+    if (body[0] === '#') {
+      const code = body[1] === 'x' || body[1] === 'X' ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
+      if (!Number.isFinite(code) || code <= 0 || code > 0x10ffff) return match;
+      try {
+        return String.fromCodePoint(code);
+      } catch {
+        return match;
+      }
+    }
+    const named = NAMED_ENTITIES[body.toLowerCase()];
+    return named ?? match;
+  });
+}
+
+export function collapseWhitespace(text: string): string {
+  return text.replace(/[\s ​]+/g, ' ').trim();
+}
+
+/**
+ * Converts (possibly entity-escaped) HTML to plain text: decode, drop scripts/styles/comments,
+ * drop tags, decode again (feeds often double-escape), collapse whitespace.
+ */
+export function stripHtml(html: string): string {
+  let text = decodeEntities(html);
+  text = text.replace(/<!--[\s\S]*?-->/g, ' ');
+  text = text.replace(/<(script|style|noscript|figure|figcaption)\b[\s\S]*?<\/\1\s*>/gi, ' ');
+  text = text.replace(/<\/?[a-z][^>]*>/gi, ' ');
+  text = decodeEntities(text);
+  // Tags were replaced by spaces; do not leave "word ." behind.
+  return collapseWhitespace(text).replace(/\s+([.,;:!?)\]])/g, '$1');
+}
+
+/** Truncates to at most `max` characters, preferring a word boundary, ending with "…". */
+export function truncate(text: string, max: number): string {
+  const clean = collapseWhitespace(text);
+  if (clean.length <= max) return clean;
+  const hard = clean.slice(0, Math.max(0, max - 1));
+  const lastSpace = hard.lastIndexOf(' ');
+  const cut = lastSpace >= Math.floor(max * 0.6) ? hard.slice(0, lastSpace) : hard;
+  return `${cut.replace(/[\s.,;:!?\-–—]+$/u, '')}…`;
+}
+
+const SENTENCE_END = /[.!?]["'”’)\]]*(?=\s|$)/g;
+const ENDS_WITH_SENTENCE = /[.!?]["'”’)\]]*$/;
+
+/** Index just after the last sentence end in `text`, or -1. */
+function lastSentenceEnd(text: string): number {
+  let end = -1;
+  for (const match of text.matchAll(SENTENCE_END)) end = (match.index ?? 0) + match[0].length;
+  return end;
+}
+
+/**
+ * Text that was cut mid-sentence (by the publisher, with or without a trailing "…") ends at its
+ * last complete sentence, as long as that keeps at least 40% of it. Complete text, and text
+ * without any sentence break (subtitles, single clauses), is returned unchanged.
+ */
+export function trimToLastSentence(text: string): string {
+  const clean = collapseWhitespace(text);
+  const cutMarker = /(?:…|\.\.\.)$/.test(clean);
+  if (!clean || (!cutMarker && ENDS_WITH_SENTENCE.test(clean))) return clean;
+  const body = clean.replace(/\s*(?:…|\.\.\.)$/, '');
+  const end = lastSentenceEnd(body);
+  if (end > 0 && end >= Math.floor(body.length * 0.4)) return body.slice(0, end);
+  return cutMarker ? `${body}…` : body;
+}
+
+/** Like `truncate`, but prefers ending at the last full sentence within `max` characters. */
+export function truncateToSentence(text: string, max: number): string {
+  const clean = collapseWhitespace(text);
+  if (clean.length <= max) return trimToLastSentence(clean);
+  const window = clean.slice(0, max);
+  const end = lastSentenceEnd(window);
+  if (end > 0 && end >= Math.floor(max * 0.4)) return window.slice(0, end);
+  return truncate(clean, max);
+}
+
+// ---------------------------------------------------------------------------
+// Dates (everything is UTC)
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** ISO 8601 UTC without milliseconds, e.g. 2026-10-25T21:00:00Z. */
+export function toIso(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
+/** YYYY-MM-DD of the UTC calendar date. */
+export function ymd(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+export function isYmd(value: string): boolean {
+  if (!ISO_DATE.test(value)) return false;
+  const d = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && ymd(d) === value;
+}
+
+export function addDays(dateYmd: string, days: number): string {
+  const d = new Date(`${dateYmd}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return ymd(d);
+}
+
+export const HOUR_MS = 3_600_000;
+export const DAY_MS = 24 * HOUR_MS;
+
+const HAS_ZONE = /(?:Z|[+-]\d{2}:?\d{2}|\b(?:GMT|UTC|UT|[ECMP][SD]T))\s*$/i;
+
+/**
+ * Parses RSS (RFC 822), Atom (ISO 8601) and loose dates such as "October 22, 2026".
+ * Strings without a time zone are read as UTC so the result never depends on the host TZ.
+ */
+export function parseFeedDate(raw: string | undefined): Date | null {
+  if (!raw) return null;
+  const value = collapseWhitespace(raw);
+  if (!value) return null;
+  if (ISO_DATE.test(value)) {
+    const d = new Date(`${value}T00:00:00Z`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const hasZone = HAS_ZONE.test(value) || /T\d{2}:\d{2}.*(?:Z|[+-]\d{2}:?\d{2})$/.test(value);
+  const candidates = hasZone ? [value] : [`${value} UTC`, `${value}Z`, value];
+  for (const candidate of candidates) {
+    const t = Date.parse(candidate);
+    if (!Number.isNaN(t)) return new Date(t);
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Async helpers
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Runs `fn` over `items` with at most `limit` in flight; results keep input order. */
+export async function mapLimit<T, R>(items: readonly T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, async () => {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await fn(items[index] as T, index);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// Bounded network reads (third-party bodies must not exhaust memory or hang the run)
+
+export class BodyTooLargeError extends Error {
+  constructor(maxBytes: number) {
+    super(`response body exceeds ${maxBytes} bytes`);
+    this.name = 'BodyTooLargeError';
+  }
+}
+
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) throw signal.reason instanceof Error ? signal.reason : new Error('request aborted');
+}
+
+/**
+ * Reads a response body as UTF-8 text with a hard byte cap. The read is aborted (and the stream
+ * cancelled) as soon as the cap or the signal's deadline is hit, so the timeout covers the body too.
+ */
+export async function readBodyCapped(res: Response, maxBytes: number, signal?: AbortSignal): Promise<string> {
+  const declared = Number(res.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    await res.body?.cancel().catch(() => undefined);
+    throw new BodyTooLargeError(maxBytes);
+  }
+  if (!res.body) return '';
+  const reader = res.body.getReader();
+  const onAbort = (): void => {
+    reader.cancel().catch(() => undefined);
+  };
+  signal?.addEventListener('abort', onAbort, { once: true });
+  try {
+    const decoder = new TextDecoder();
+    let text = '';
+    let total = 0;
+    for (;;) {
+      throwIfAborted(signal);
+      const { done, value } = await reader.read();
+      throwIfAborted(signal);
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => undefined);
+        throw new BodyTooLargeError(maxBytes);
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    return text + decoder.decode();
+  } finally {
+    signal?.removeEventListener('abort', onAbort);
+  }
+}
+
+/**
+ * Splits a byte stream into lines with bounded memory: lines longer than `maxLineChars` are dropped
+ * (counted in `stats.oversized`), and the whole stream fails once it exceeds `maxBytes`.
+ */
+export async function* boundedLines(
+  stream: ReadableStream<Uint8Array>,
+  limits: { maxLineChars: number; maxBytes: number },
+  stats: { oversized: number } = { oversized: 0 },
+): AsyncGenerator<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let pending = '';
+  let skipping = false; // inside an over-long line: drop text until the next newline
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > limits.maxBytes) throw new BodyTooLargeError(limits.maxBytes);
+      let chunk = decoder.decode(value, { stream: true });
+      for (;;) {
+        const newline = chunk.indexOf('\n');
+        if (newline < 0) break;
+        const part = chunk.slice(0, newline);
+        chunk = chunk.slice(newline + 1);
+        if (skipping) skipping = false;
+        else if (pending.length + part.length > limits.maxLineChars) stats.oversized++;
+        else yield pending + part;
+        pending = '';
+      }
+      if (skipping) continue;
+      if (pending.length + chunk.length > limits.maxLineChars) {
+        stats.oversized++;
+        pending = '';
+        skipping = true;
+      } else {
+        pending += chunk;
+      }
+    }
+    const rest = pending + decoder.decode();
+    if (!skipping && rest) yield rest;
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
+}
+
+export function errorMessage(err: unknown): string {
+  if (err instanceof Error) {
+    const cause = err.cause instanceof Error ? ` (${err.cause.message})` : '';
+    return `${err.name === 'Error' ? '' : `${err.name}: `}${err.message}${cause}`;
+  }
+  return String(err);
+}
+
+export function log(scope: string, message: string): void {
+  console.log(`[${scope}] ${message}`);
+}
+
+export function warn(scope: string, message: string): void {
+  console.warn(`[${scope}] WARN ${message}`);
+}

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+  <title>Fixture Platform Blog</title>
+  <link rel="alternate" type="text/html" href="https://platform.example.com/blog/"/>
+  <link rel="self" type="application/atom+xml" href="https://platform.example.com/blog/feed/"/>
+  <updated>2026-10-25T10:00:00Z</updated>
+  <entry>
+    <id>tag:platform.example.com,2026:1</id>
+    <title type="text">Choose an audience for each ad creative</title>
+    <link rel="self" type="application/atom+xml" href="https://platform.example.com/api/posts/1"/>
+    <link rel="alternate" type="text/html" href="https://platform.example.com/blog/post/2026/10/audience-per-creative/"/>
+    <published>2026-10-21T10:04:53.294-07:00</published>
+    <updated>2026-10-22T08:00:00Z</updated>
+    <summary>Advertisers can now pick an audience for every creative in an ad set.</summary>
+    <media:thumbnail url="https://platform.example.com/img/thumb.jpg" width="72" height="72"/>
+  </entry>
+  <entry>
+    <id>tag:platform.example.com,2026:2</id>
+    <title type="html">API &amp;lt;v22&amp;gt; sunset &amp;amp; migration</title>
+    <link href="https://platform.example.com/blog/post/2026/10/api-sunset/"/>
+    <updated>2026-10-24T12:00:00Z</updated>
+    <content type="html">&lt;p&gt;Version 21 of the &lt;em&gt;Marketing API&lt;/em&gt; sunsets in January.&lt;/p&gt;</content>
+  </entry>
+  <entry>
+    <id>tag:platform.example.com,2026:3</id>
+    <title>Data URI entry</title>
+    <link rel="alternate" href="data:text/html,%3Cscript%3Ealert(1)%3C/script%3E"/>
+    <published>2026-10-24T12:00:00Z</published>
+    <summary>Must be dropped.</summary>
+  </entry>
+</feed>
