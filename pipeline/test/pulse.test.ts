@@ -128,6 +128,16 @@ describe('insights via LLM', () => {
     assert.equal(requests.length, 1);
   });
 
+  it('falls back to the template when any insight carries a link or markup', async () => {
+    const draft = await draftPromise;
+    for (const bad of ['See https://evil.example for the full data set.', 'Video led new ads; <a href="x">details</a> inside.', 'Video led new ads, see [the report](https://evil.example).']) {
+      const { llm } = fakeLlm(() => ({ insights: ['Image ads made up an estimated half of new ads in the sample.', bad, 'Acme launched the most new ads in the sample this week.'] }));
+      const result = await generateInsights(llm, draft);
+      assert.equal(result.fromLlm, false, bad);
+      assert.deepEqual(result.insights, fallbackInsights(draft));
+    }
+  });
+
   it('falls back to the template on a bad response', async () => {
     const draft = await draftPromise;
     const { llm } = fakeLlm(() => ({ insights: ['too short'] }));

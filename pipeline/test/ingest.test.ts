@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { SourceConfig } from '../src/config.ts';
 import { canonicalizeUrl, dedupeItems, entriesToItems, ingestAll, itemId, mergeNewItems, normalizeTitle, parseFeed } from '../src/ingest.ts';
-import { parseFeedDate, parseHttpUrl, sha1Hex, stripHtml } from '../src/util.ts';
+import { containsLinkOrMarkup, parseFeedDate, parseHttpUrl, sha1Hex, stripControlChars, stripHtml, stripLinksAndMarkup } from '../src/util.ts';
 import { fixture, makeItem } from './helpers.ts';
 
 const NOW = new Date('2026-10-25T21:00:00Z');
@@ -271,6 +271,26 @@ describe('helpers', () => {
     assert.equal(parseFeedDate('2026-10-06T10:00:00')?.toISOString(), '2026-10-06T10:00:00.000Z');
     assert.equal(parseFeedDate('Thu, 22 Oct 2026 08:56:36 -0700')?.toISOString(), '2026-10-22T15:56:36.000Z');
     assert.equal(parseFeedDate('not a date'), null);
+  });
+
+  it('detects and strips links, markup and control characters in untrusted text', () => {
+    for (const bad of ['see https://x.example', 'ftp://x/y', 'myapp://open', 'javascript:alert(1)', 'data:text/html,x', 'www.evil.example/x', '<b>hi</b>', '<!-- c -->', '[a](b)', '![img](x.png)']) {
+      assert.equal(containsLinkOrMarkup(bad), true, bad);
+    }
+    for (const ok of ['Booking.com grows CTV spend', 'First-party data: why it matters', 'a < b and c > d', 'Q3 [preview] numbers']) {
+      assert.equal(containsLinkOrMarkup(ok), false, ok);
+    }
+    assert.equal(stripLinksAndMarkup('Read [the guide](https://x.example) at https://x.example/p or www.x.example/q <b>now</b>.'), 'Read the guide at or now.');
+    assert.equal(stripControlChars('a\u0000b\u0007c‮d​e\nf'), 'a b c d e f');
+  });
+
+  it('removes URLs and markdown links from feed titles and snippets', () => {
+    const xml = `<rss><channel><item><title>Big news [here](https://evil.example/t)</title><link>https://news.example.com/x</link>
+      <pubDate>Sun, 25 Oct 2026 10:00:00 +0000</pubDate><description>Details at https://evil.example/d and www.evil.example/w.</description></item></channel></rss>`;
+    const [entry] = parseFeed(xml);
+    const { items } = entriesToItems(entry ? [entry] : [], NEWS, NOW);
+    assert.equal(items[0]?.title, 'Big news here');
+    assert.ok(!JSON.stringify(items).includes('evil.example'));
   });
 
   it('stripHtml handles double-escaped markup', () => {

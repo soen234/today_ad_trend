@@ -5,8 +5,8 @@ import { fallbackFields, isOffTopicTitle } from './enrich.ts';
 import type { StoredItem } from './types.ts';
 import type { FetchLike } from './util.ts';
 import {
-  DAY_MS, collapseWhitespace, decodeEntities, errorMessage, log, mapLimit, parseFeedDate, parseHttpUrl, sha1Hex,
-  stripHtml, toIso, truncate, warn,
+  DAY_MS, decodeEntities, errorMessage, log, mapLimit, parseFeedDate, parseHttpUrl, sha1Hex, stripControlChars, stripHtml,
+  stripLinksAndMarkup, toIso, truncate, warn,
 } from './util.ts';
 
 /** One entry as parsed from a feed, before any filtering. */
@@ -76,8 +76,13 @@ const TRAILERS = [
   /\s*(?:Continue reading|Read more)\b.{0,120}$/i,
 ];
 
+/** Feed text is untrusted: no control characters, no URLs, links or markup survive into our output. */
+function cleanUntrusted(text: string): string {
+  return stripLinksAndMarkup(stripControlChars(text));
+}
+
 function cleanSnippet(text: string): string {
-  let out = text;
+  let out = cleanUntrusted(text);
   for (const pattern of TRAILERS) out = out.replace(pattern, '');
   return truncate(out, INGEST.snippetMaxChars);
 }
@@ -248,7 +253,7 @@ export function entriesToItems(entries: readonly FeedEntry[], source: SourceConf
       stats.noLink++;
       continue;
     }
-    const title = truncate(collapseWhitespace(entry.title), INGEST.titleMaxChars);
+    const title = truncate(cleanUntrusted(entry.title), INGEST.titleMaxChars);
     if (!title) {
       stats.noTitle++;
       continue;

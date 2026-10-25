@@ -34,6 +34,47 @@ export function isHttpUrl(value: unknown): value is string {
 }
 
 // ---------------------------------------------------------------------------
+// Untrusted text (feed text going into prompts, LLM text coming out)
+
+// C0/C1 controls, zero-width characters, bidi overrides/isolates and the BOM.
+const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁤⁦-⁩﻿]/g;
+
+/** Replaces control/invisible characters with spaces and collapses whitespace. */
+export function stripControlChars(text: string): string {
+  return collapseWhitespace(text.replace(CONTROL_CHARS, ' '));
+}
+
+/** Untrusted text prepared for a prompt: no control characters, length-capped. */
+export function promptText(text: string, max: number): string {
+  return truncate(stripControlChars(text), max);
+}
+
+const LINK_OR_MARKUP: readonly RegExp[] = [
+  /\b[a-z][a-z0-9+.-]*:\/\//i, // any scheme URL: https://, ftp://, myapp://
+  /\b(?:javascript|vbscript|data|mailto|file|intent|tel|sms):[^\s]/i, // scheme without "//"
+  /\bwww\.[a-z0-9-]+\.[a-z]/i, // www.example.com
+  /<\/?[a-z!][^>]*>/i, // HTML tags and comments
+  /\[[^\]]*\]\([^)]*\)/, // markdown link or image: [text](url)
+];
+
+/** True when text contains a URL, HTML or a markdown link (never allowed in generated text). */
+export function containsLinkOrMarkup(text: string): boolean {
+  return LINK_OR_MARKUP.some((pattern) => pattern.test(text));
+}
+
+/** Removes markdown links (keeping their text), HTML tags and URLs from third-party text. */
+export function stripLinksAndMarkup(text: string): string {
+  return collapseWhitespace(
+    text
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/<\/?[a-z!][^>]*>/gi, ' ')
+      .replace(/\b[a-z][a-z0-9+.-]*:\/\/\S+/gi, ' ')
+      .replace(/\b(?:javascript|vbscript|data|mailto|file|intent|tel|sms):\S+/gi, ' ')
+      .replace(/\bwww\.[a-z0-9-]+\.\S+/gi, ' '),
+  ).replace(/\s+([.,;:!?)\]])/g, '$1');
+}
+
+// ---------------------------------------------------------------------------
 // Text
 
 const NAMED_ENTITIES: Record<string, string> = {
