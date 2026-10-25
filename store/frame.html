@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 440px; height: 956px; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    background: radial-gradient(120% 80% at 50% 0%, #17324B 0%, #0B1B2B 55%, #06111C 100%);
+    color: #fff; display: flex; flex-direction: column; align-items: center;
+  }
+  .eyebrow { margin-top: 54px; font-size: 13px; letter-spacing: .14em; font-weight: 700; text-transform: uppercase; color: #3CE39A; }
+  h1 { margin: 10px 28px 0; font-size: 34px; line-height: 39px; font-weight: 800; text-align: center; letter-spacing: -.01em; }
+  h1 em { font-style: normal; color: #F79009; }
+  .device {
+    margin-top: 30px; width: 330px; height: 714px; border-radius: 48px; padding: 9px;
+    background: #1D2A36; box-shadow: 0 30px 60px rgba(0,0,0,.45), inset 0 0 0 2px #2E4051;
+  }
+  .screen { width: 100%; height: 100%; border-radius: 40px; overflow: hidden; background: #F5F7FA; }
+  .screen img { width: 100%; display: block; }
+</style>
+</head>
+<body>
+  <div class="eyebrow" id="eyebrow"></div>
+  <h1 id="title"></h1>
+  <div class="device"><div class="screen"><img id="shot"></div></div>
+  <script>
+    const p = new URLSearchParams(location.search);
+    document.getElementById('eyebrow').textContent = p.get('eyebrow') || '';
+    document.getElementById('title').innerHTML = (p.get('title') || '').replace(/\*(.+?)\*/g, '<em>$1</em>');
+    document.getElementById('shot').src = p.get('shot');
+  </script>
+</body>
+</html>
