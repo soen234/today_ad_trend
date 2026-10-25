@@ -1,0 +1,36 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "categories": [
+      "NEWS",
+      "BUSINESS"
+    ],
+    "info": {
+      "en-US": {
+        "title": "Today Ad Trend: Ad Briefing",
+        "subtitle": "Your 3-minute marketing brief",
+        "promoText": "What changed in advertising today, and what it means for your campaigns. A finishable daily brief for performance, UA and brand marketers.",
+        "description": "Today Ad Trend is a 3-minute daily briefing for people who run ads.\n\nEvery morning you get 5–7 things that actually changed in advertising, picked for your role, each with a one-line \"so what\": what it means for your campaigns and what to check. Read them, and you're done for the day.\n\nBUILT FOR YOUR JOB\nChoose your brief once:\n• Performance marketer: paid social and search, bidding, measurement, CPA and ROAS\n• UA / app marketer: app installs, MMPs, SKAN and AdAttributionKit, app ad networks\n• Brand & creative marketer: messaging, creative, campaigns, what competitors run\n\nWHAT'S INSIDE\n• Today: a short, finishable brief with a \"so what\" for every item and a daily streak\n• Platforms: official product and policy updates from the major ad platforms\n• News: the day’s stories from leading ad-industry publications\n• Experts: new posts from well-known marketing and growth writers\n• Creative Pulse: a weekly read on what advertisers launch, based on public ad transparency data: format mix, audience targeting, top launchers and long-running ads\n• Swipe file: save anything worth keeping\n• Watchlist: follow brands, platforms or topics and see every mention\n\nQUIET BY DESIGN\nOne optional reminder a day, at the time you pick, in your time zone. No account needed. Your settings, saved items and watchlist stay on your device.\n\nSummaries and \"so what\" notes are AI-generated from public sources. Every item links to the original publisher.",
+        "keywords": [
+          "advertising",
+          "adtech",
+          "news",
+          "paid social",
+          "ppc",
+          "roas",
+          "cpa",
+          "skan",
+          "ua",
+          "creative",
+          "martech",
+          "growth",
+          "media buyer"
+        ],
+        "releaseNotes": "A brand-new Today Ad Trend:\n• A 3-minute daily brief for your role, with a \"so what\" for every item\n• Explore news, official platform updates, expert takes and the weekly Creative Pulse\n• Save items to your swipe file and follow keywords with the watchlist\n• One optional daily reminder at a time you choose",
+        "marketingUrl": "https://todayadtrend.com",
+        "supportUrl": "https://todayadtrend.com",
+        "privacyPolicyUrl": "https://todayadtrend.com/privacy"
+      }
+    }
+  }
+}
