@@ -1,0 +1,270 @@
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+import {
+  enrichItems, fallbackImportance, fallbackRoles, isOffTopicTitle, keywordRelevance, parseEnrichment, platformsFromText,
+} from '../src/enrich.ts';
+import { createLlmClient, llmConfigFromEnv } from '../src/llm.ts';
+import type { StoredItem } from '../src/types.ts';
+import { fakeLlm, makeItem } from './helpers.ts';
+
+function validResult(i: number): Record<string, unknown> {
+  return {
+    i,
+    summary: `Our own summary number ${i}.`,
+    platforms: ['meta', 'google'],
+    tags: ['measurement'],
+    importance: 4,
+    roles: {
+      performance: { relevance: 3, soWhat: 'Re-check bid caps this week.' },
+      ua: { relevance: 1, soWhat: 'Watch for SKAN changes.' },
+      brand: { relevance: 0, soWhat: '' },
+    },
+  };
+}
+
+function unenriched(n: number): StoredItem[] {
+  return Array.from({ length: n }, (_, i) => {
+    const hour = String(i % 24).padStart(2, '0');
+    const day = String(10 + Math.floor(i / 24)).padStart(2, '0');
+    return makeItem({
+      title: `Raw item ${i}`,
+      enriched: false,
+      importance: 2,
+      summary: `Fallback summary ${i}`,
+      snippet: `Snippet ${i}`,
+      publishedAt: `2026-10-${day}T${hour}:00:00Z`,
+    });
+  });
+}
+
+/** Echoes a valid result for every item in the request. */
+function echo(body: Record<string, unknown>): unknown {
+  const messages = body.messages as { content: string }[];
+  const input = JSON.parse(messages[1]?.content ?? '{}') as { items: { i: number }[] };
+  return { items: input.items.map((item) => validResult(item.i)) };
+}
+
+describe('parseEnrichment', () => {
+  it('accepts and clamps a valid result', () => {
+    const parsed = parseEnrichment({
+      summary: `  ${'Long summary text '.repeat(30)}  `,
+      platforms: ['Meta', 'myspace', 'meta', 'x'],
+      tags: ['Attribution', '#CTV', 'privacy', 'retail media', 'fifth tag', ''],
+      importance: 9,
+      roles: {
+        performance: { relevance: 7, soWhat: `Shift budget ${'now '.repeat(60)}` },
+        ua: { relevance: -1, soWhat: 'Should be cleared.' },
+        brand: { relevance: '2', soWhat: 'Brief the creative team.' },
+      },
+    });
+    assert.ok(parsed);
+    assert.ok(parsed.summary.length <= 280);
+    assert.deepEqual(parsed.platforms, ['meta', 'x']);
+    assert.deepEqual(parsed.tags, ['attribution', 'ctv', 'privacy', 'retail media']);
+    assert.equal(parsed.importance, 5);
+    assert.equal(parsed.roles.performance.relevance, 3);
+    assert.ok(parsed.roles.performance.soWhat.length <= 160);
+    assert.deepEqual(parsed.roles.ua, { relevance: 0, soWhat: '' });
+    assert.deepEqual(parsed.roles.brand, { relevance: 2, soWhat: 'Brief the creative team.' });
+  });
+
+  it('rejects results with missing or mistyped fields', () => {
+    const base = validResult(0);
+    assert.equal(parseEnrichment(null), null);
+    assert.equal(parseEnrichment({ ...base, summary: '' }), null);
+    assert.equal(parseEnrichment({ ...base, summary: 5 }), null);
+    assert.equal(parseEnrichment({ ...base, importance: 'high' }), null);
+    assert.equal(parseEnrichment({ ...base, platforms: 'meta' }), null);
+    assert.equal(parseEnrichment({ ...base, roles: { performance: base.roles } }), null);
+    assert.equal(parseEnrichment({ ...base, roles: { ...(base.roles as object), ua: { relevance: 'x', soWhat: '' } } }), null);
+  });
+});
+
+describe('fallback heuristic (no LLM)', () => {
+  it('maps distinct role keyword matches to relevance 0-3', () => {
+    assert.equal(keywordRelevance('performance', 'A quiet week'), 0);
+    assert.equal(keywordRelevance('performance', 'New bidding options'), 1);
+    assert.equal(keywordRelevance('performance', 'Bidding and ROAS'), 2);
+    assert.equal(keywordRelevance('performance', 'Google Ads bidding, ROAS and CPA targets for PMax'), 3);
+  });
+
+  it('matches whole words and phrases only', () => {
+    assert.equal(keywordRelevance('ua', 'Mapping the happy path'), 0, 'app inside other words');
+    assert.equal(keywordRelevance('brand', 'Campaigns and creatives'), 0, 'plural forms are not in the list');
+    assert.equal(keywordRelevance('brand', 'CTV growth'), 1, 'ctv matches, tv inside CTV does not');
+    assert.equal(keywordRelevance('performance', 'Advantage+ shopping campaigns'), 1);
+    assert.equal(keywordRelevance('ua', 'In-app bidding'), 2, 'in-app and app');
+  });
+
+  it('gives platform items at least relevance 1 for performance and ua, never soWhat', () => {
+    const roles = fallbackRoles('Quarterly partner awards', 'platform');
+    assert.deepEqual(roles, { performance: { relevance: 1, soWhat: '' }, ua: { relevance: 1, soWhat: '' }, brand: { relevance: 0, soWhat: '' } });
+    assert.deepEqual(fallbackRoles('Quarterly partner awards', 'news').performance, { relevance: 0, soWhat: '' });
+  });
+
+  it('sets importance 3 for platform, 2 otherwise, +1 for change words in the title', () => {
+    assert.equal(fallbackImportance('Partner awards', 'platform'), 3);
+    assert.equal(fallbackImportance('Partner awards', 'news'), 2);
+    assert.equal(fallbackImportance('Partner awards', 'expert'), 2);
+    assert.equal(fallbackImportance('Meta launches a new format', 'news'), 3);
+    assert.equal(fallbackImportance('API v19 deprecation timeline', 'platform'), 4);
+    assert.equal(fallbackImportance('Google now requires advertiser verification', 'news'), 3);
+    assert.equal(fallbackImportance('Policy update for political ads', 'news'), 3);
+    assert.equal(fallbackImportance('Newsletter roundup', 'news'), 2, '"new" must be a whole word');
+    assert.equal(fallbackImportance('Banner sizes explained', 'news'), 2, '"ban" must be a whole word');
+  });
+
+  it('flags off-topic titles conservatively', () => {
+    assert.equal(isOffTopicTitle('Cable News Ratings: Week of Oct. 19'), true);
+    assert.equal(isOffTopicTitle('Box office slump hits theaters'), true);
+    assert.equal(isOffTopicTitle('Nielsen ratings for streaming ads'), false);
+  });
+});
+
+describe('platformsFromText', () => {
+  it('detects platforms by keyword and adds the source hint', () => {
+    assert.deepEqual(platformsFromText('Instagram Reels and YouTube Shorts ads'), ['meta', 'youtube']);
+    assert.deepEqual(platformsFromText('Advantage+ shopping campaigns get a new budget control'), ['meta']);
+    assert.deepEqual(platformsFromText('How to take advantage of holiday traffic'), []);
+    assert.deepEqual(platformsFromText('SKAN 5 and AdAttributionKit update'), ['apple']);
+    assert.deepEqual(platformsFromText("X's ad revenue falls"), ['x']);
+    assert.deepEqual(platformsFromText('Former Twitter execs launch a startup'), ['x']);
+    assert.deepEqual(platformsFromText('Box office: 10x growth'), []);
+    assert.deepEqual(platformsFromText('Nothing relevant', 'microsoft'), ['microsoft']);
+    assert.deepEqual(platformsFromText('metadata and snapshot'), []);
+  });
+});
+
+describe('enrichItems', () => {
+  it('batches newest first, at most 12 per request, spaced >= 4.5 s, JSON mode, temperature 0.2', async () => {
+    const items = unenriched(30);
+    const { llm, requests, sleeps } = fakeLlm(echo);
+    const report = await enrichItems(items, llm);
+    assert.deepEqual(report, { queued: 30, requests: 3, enriched: 30, failed: 0 });
+    assert.equal(requests.length, 3);
+    for (const request of requests) {
+      assert.equal(request.url, 'https://llm.test/inference/chat/completions');
+      assert.equal(request.headers.authorization, 'Bearer test-key');
+      assert.equal(request.body.model, 'test/model');
+      assert.equal(request.body.temperature, 0.2);
+      assert.deepEqual(request.body.response_format, { type: 'json_object' });
+    }
+    const batches = requests.map((r) => (JSON.parse((r.body.messages as { content: string }[])[1]?.content ?? '') as { items: { title: string }[] }).items);
+    assert.deepEqual(batches.map((b) => b.length), [12, 12, 6]);
+    const newest = [...items].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))[0];
+    assert.equal(batches[0]?.[0]?.title, newest?.title);
+    assert.deepEqual(sleeps, [4500, 4500]);
+    const first = items.find((item) => item.title === 'Raw item 0');
+    assert.ok(first);
+    assert.equal(first.enriched, true);
+    assert.equal(first.attempts, 1);
+    assert.equal(first.snippet, undefined);
+    assert.equal(first.importance, 4);
+    assert.deepEqual(first.roles.brand, { relevance: 0, soWhat: '' });
+  });
+
+  it('caps a run at 6 requests (72 items)', async () => {
+    const items = unenriched(100);
+    const { llm, requests } = fakeLlm(echo);
+    const report = await enrichItems(items, llm);
+    assert.equal(requests.length, 6);
+    assert.equal(report.enriched, 72);
+    assert.equal(items.filter((item) => item.attempts === 0).length, 28);
+  });
+
+  it('keeps the fallback for invalid entries and retries them up to 3 attempts', async () => {
+    const items = unenriched(3);
+    const { llm } = fakeLlm((body) => {
+      const result = echo(body) as { items: Record<string, unknown>[] };
+      return { items: result.items.map((entry) => (entry.i === 1 ? { ...entry, roles: 'bad' } : entry)) };
+    });
+    await enrichItems(items, llm);
+    const bad = items.find((item) => !item.enriched);
+    assert.ok(bad);
+    assert.equal(items.filter((item) => item.enriched).length, 2);
+    assert.equal(bad.attempts, 1);
+    assert.equal(bad.summary.startsWith('Fallback summary'), true);
+    assert.equal(bad.snippet?.startsWith('Snippet'), true);
+
+    const { llm: failing, requests } = fakeLlm(() => ({ items: [] }));
+    await enrichItems(items, failing);
+    await enrichItems(items, failing);
+    assert.equal(bad.attempts, 3);
+    await enrichItems(items, failing);
+    assert.equal(requests.length, 2, 'not queued after 3 attempts');
+  });
+
+  it('never throws on HTTP errors, malformed JSON or network failures', async () => {
+    for (const respond of [
+      () => new Response('{"error":"boom"}', { status: 500 }),
+      () => 'not json at all',
+      () => {
+        throw new TypeError('fetch failed');
+      },
+    ]) {
+      const items = unenriched(2);
+      const { llm } = fakeLlm(respond);
+      const report = await enrichItems(items, llm);
+      assert.equal(report.enriched, 0);
+      assert.equal(report.failed, 2);
+      for (const item of items) {
+        assert.equal(item.enriched, false);
+        assert.equal(item.attempts, 1);
+        assert.equal(item.importance, 2);
+      }
+    }
+  });
+
+  it('retries once after a short 429', async () => {
+    const items = unenriched(1);
+    const { llm, requests, sleeps } = fakeLlm((body, call) =>
+      call === 1 ? new Response('rate limited', { status: 429, headers: { 'retry-after': '2' } }) : echo(body));
+    const report = await enrichItems(items, llm);
+    assert.equal(report.enriched, 1);
+    assert.equal(requests.length, 2);
+    assert.ok(sleeps.includes(2000));
+  });
+
+  it('makes no request at all when the LLM is disabled', async () => {
+    const items = unenriched(5);
+    const { llm, requests } = fakeLlm(() => assert.fail('must not be called'), { disabled: true });
+    const report = await enrichItems(items, llm);
+    assert.equal(requests.length, 0);
+    assert.equal(report.skippedReason, 'LLM disabled');
+    assert.ok(items.every((item) => item.attempts === 0 && !item.enriched));
+  });
+
+  it('never queues synthetic creative items', async () => {
+    const items = [makeItem({ section: 'creative', enriched: false })];
+    const { llm, requests } = fakeLlm(echo);
+    const report = await enrichItems(items, llm);
+    assert.equal(report.queued, 0);
+    assert.equal(requests.length, 0);
+  });
+});
+
+describe('llm config', () => {
+  it('is disabled by LLM_DISABLED=1 or a missing key, and never calls fetch then', async () => {
+    let calls = 0;
+    const fetchSpy = async (): Promise<Response> => {
+      calls++;
+      return new Response('{}');
+    };
+    for (const env of [{ LLM_DISABLED: '1', LLM_API_KEY: 'k' }, { LLM_DISABLED: 'true' }, {}]) {
+      const llm = createLlmClient(llmConfigFromEnv(env), { fetch: fetchSpy });
+      assert.equal(llm.enabled, false);
+      assert.equal(await llm.completeJson([{ role: 'user', content: 'hi' }], 'test'), null);
+    }
+    assert.equal(calls, 0);
+  });
+
+  it('uses GitHub Models defaults and env overrides', () => {
+    const defaults = llmConfigFromEnv({ LLM_API_KEY: 'k' });
+    assert.equal(defaults.baseUrl, 'https://models.github.ai/inference');
+    assert.equal(defaults.model, 'openai/gpt-4.1-mini');
+    assert.equal(defaults.disabled, false);
+    const custom = llmConfigFromEnv({ LLM_API_KEY: 'k', LLM_BASE_URL: 'https://api.example.com/v1/', LLM_MODEL: 'm' });
+    assert.equal(custom.baseUrl, 'https://api.example.com/v1');
+    assert.equal(custom.model, 'm');
+  });
+});

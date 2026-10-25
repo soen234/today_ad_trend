@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel>
+  <title>Fixture News</title>
+  <link>https://news.example.com/</link>
+  <item>
+    <title><![CDATA[Meta &amp; Google expand AI ad tools]]></title>
+    <link>https://news.example.com/2026/10/ai-tools/?utm_source=rss&amp;utm_medium=feed&amp;ref=home#comments</link>
+    <pubDate>Sat, 24 Oct 2026 14:30:00 +0000</pubDate>
+    <description>&lt;p&gt;Both platforms &lt;b&gt;added&lt;/b&gt; new creative tools for advertisers&amp;#8217; campaigns.&lt;/p&gt;&lt;p&gt;The post Meta &amp;amp; Google expand AI ad tools appeared first on Fixture News.&lt;/p&gt;</description>
+    <media:content url="https://cdn.example.com/img/ai-tools.jpg" medium="image" width="600" height="400"/>
+  </item>
+  <item>
+    <title>Apple&#8217;s new AdAttributionKit rules for app marketers</title>
+    <link>https://news.example.com/2026/10/adattributionkit?fbclid=abc123&amp;gclid=xyz</link>
+    <pubDate>Fri, 23 Oct 2026 09:00:00 PDT</pubDate>
+    <content:encoded><![CDATA[<figure><img src="https://news.example.com/x.png"/><figcaption>Caption text</figcaption></figure><p>Apple changed postback windows for <a href="https://developer.apple.com">AdAttributionKit</a>.</p>]]></content:encoded>
+    <enclosure url="https://cdn.example.com/img/aak.png" length="0" type="image/jpeg"/>
+  </item>
+  <item>
+    <title>Partner awards announced</title>
+    <link><![CDATA[https://news.example.com/2026/10/awards]]></link>
+    <pubDate>October 22, 2026</pubDate>
+    <description><![CDATA[Congratulations to this year's winners.]]></description>
+    <media:content url="javascript:alert(1)" medium="image"/>
+  </item>
+  <item>
+    <title>Guid-only permalink post</title>
+    <guid isPermaLink="true">https://news.example.com/2026/10/guid-only</guid>
+    <dc:date>2026-10-21T08:00:00Z</dc:date>
+    <description>Linked only through its guid.</description>
+    <enclosure url="https://cdn.example.com/audio/episode.mp3" length="0" type="audio/mpeg"/>
+  </item>
+  <item>
+    <title>Old news from two weeks ago</title>
+    <link>https://news.example.com/2026/10/old</link>
+    <pubDate>Sun, 11 Oct 2026 10:00:00 +0000</pubDate>
+    <description>Too old to keep.</description>
+  </item>
+  <item>
+    <title>Script link item</title>
+    <link>javascript:alert(document.cookie)</link>
+    <pubDate>Sat, 24 Oct 2026 10:00:00 +0000</pubDate>
+    <description>Must be dropped.</description>
+  </item>
+  <item>
+    <title>Data link item</title>
+    <link>data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==</link>
+    <pubDate>Sat, 24 Oct 2026 10:00:00 +0000</pubDate>
+    <description>Must be dropped.</description>
+  </item>
+  <item>
+    <title>Relative link item</title>
+    <link>/2026/10/relative-path</link>
+    <pubDate>Sat, 24 Oct 2026 10:00:00 +0000</pubDate>
+    <description>Must be dropped.</description>
+  </item>
+  <item>
+    <title>Undated item</title>
+    <link>https://news.example.com/2026/10/undated</link>
+    <description>No date at all.</description>
+  </item>
+</channel>
+</rss>
